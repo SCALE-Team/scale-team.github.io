@@ -25,11 +25,15 @@ var ScalePerformanceBarClass = function() {
 		style += "#PerfBar >div { padding: 0px; }";
 		style += "#PerfBar > div a { width:	100%; }";
 		style += "#PerfBar .perfSeparator { display: none; }";
-		style += "#PerfBar .perfClose { display: block; width: 100% !important; text-align: left !important; position: static !important; }";
+		style += "#PerfBar .perf-symbols { display: block; width: 100% !important; text-align: left !important; position: static !important; }";
+		style += "#PerfBar .perf-symbols > * { display: block; width: 100% !important; text-align: left !important; position: static !important; }";
+		style += "#PerfBar .perf-symbols .symbol { display: none; }";
+		style += "#PerfBar .perf-symbols .fullName { display: block !important; }";
 		style += "#PerfBar .perfCloseSeparator { display: block; }";
 	style += "}";
-	style += "#PerfBar .perfClose, #PerfToolActiveBar .perfClose, #PerfBar .perfHelp, #PerfToolActiveBar .perfHelp { position: absolute; width: 30px; text-align: center; top: 0px; right: 0px; }";
-	style += "#PerfBar .perfHelp, #PerfToolActiveBar .perfHelp { width: 30px; right: 30px; }";
+	style += "#PerfBar .perf-symbols, #PerfToolActiveBar .perf-symbols { position: absolute; top: 0px; right: 0px; }";
+	style += "#PerfBar .perf-symbols > a, #PerfToolActiveBar .perf-symbols > a { width: 30px; text-align: center; }";
+	style += "#PerfBar .perf-symbols .fullName { display: none;  }";
 	style += "#PerfToolTitle { font-weight: bold; }";
 	style += "#PerfToolActiveBar .perfToolBackButton { font-weight: bold; }";
 
@@ -102,7 +106,7 @@ var ScalePerformanceBarClass = function() {
 			}
 		},
 		{
-			name:	"Analyze page for tips",
+			name:	"Analyze DOM tree",
 			href:	"https://scale-team.github.io/scale-perf/tools/dommonster.js",
 			localHref:	"/tools/dommonster.js",
 			onclick:	function() {
@@ -132,7 +136,7 @@ var ScalePerformanceBarClass = function() {
 						stats.domElement.style.left = "0px";
 						stats.domElement.style.top = "0px";
 						stats.domElement.style.zIndex = "10000";
-						document.body.appendChild(stats.domElement);
+						body.appendChild(stats.domElement);
 						
 						// for the transition animation
 						stats.domElement.style.cssText += "transition:transform ease-out 0.3s; transform:translateY(-450px); -webkit-transition:-webkit-transform ease-out 0.3s; -webkit-transform:translateY(-450px);";
@@ -146,7 +150,7 @@ var ScalePerformanceBarClass = function() {
 						//* SCALE perf bookmarklet extension
 						addFunctionOnToolClose(function()
 						{
-							document.body.removeChild(stats.domElement);
+							body.removeChild(stats.domElement);
 							clearInterval(interval);
 						});
 						//*/
@@ -154,14 +158,78 @@ var ScalePerformanceBarClass = function() {
 				}, 100);
 			}
 		},
+		{
+			name:			"Help",
+			symbol:			"?",
+			pullToSymbols:	true,
+			url:			"https://github.com/SCALE-Team/scale-perf/blob/master/README.md#readme"		
+			/*
+			onclick: function() {
+				//self.location.href = "https://github.com/SCALE-Team/scale-perf/blob/master/README.md#readme";
+				
+				var jselem = document.createElement("script");
+				jselem.type = "text/javascript";
+				jselem.src = "https://scale-team.github.io/scale-perf/markdown.min.js";
+				jselem.onload = function() {
+					xmlhttp.onreadystatechange = function()
+					{
+						if (xmlhttp.readyState==4 && xmlhttp.status==200)
+						{
+							document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+						}
+					}
+					
+					xmlhttp.open("GET", "ajax_info.txt",true);
+					xmlhttp.send();
+				};
+				body.appendChild(jselem);
+				
+				
+				return;
+				
+				var iframe = document.createElement("iframe");
+				iframe.src = "https://github.com/SCALE-Team/scale-perf/blob/master/README.md#readme";
+				body.appendChild(iframe);
+				
+				// For the transition animation
+				iframe.style.cssText += "transition:transform ease-out 0.3s; transform:translateY(-450px); -webkit-transition:-webkit-transform ease-out 0.3s; -webkit-transform:translateY(-450px);";
+				
+				setTimeout(function(){
+					iframe.style.cssText += '-webkit-transform:translateY(30px); transform:translateY(30px);';
+				}, 10);
+			}
+			//*/
+		},
+		{
+			name:			"Close",
+			symbol:			"X",
+			pullToSymbols:	true,
+			onclick: function() {
+				var bar = document.getElementById("PerfToolActiveBar");
+				
+				bar.superClass.topBarContainer.style.display = "none";
+				bar.superClass.avoidPageOverlapWithBar();
+			}
+		}
 	];
-
+	
+	var symbolsBlock = document.createElement("div");
+	symbolsBlock.className = "perf-symbols";
+	superClass.topBarContainer.appendChild(symbolsBlock);
+	
 	var maxIndex = (superClass.scripts.length - 1);
-	var randomInt = (Math.round(Math.random() * Math.pow(2, 16)));
-
+	
 	for(var i in superClass.scripts)
 	{
 		var script = superClass.scripts[i];
+		
+		if(i > 0 && !script.pullToSymbols)
+		{
+			var separatorElem = document.createElement("span");
+			separatorElem.className = "perfSeparator";
+			separatorElem.innerHTML = "&middot;";
+			topBar.appendChild(separatorElem);
+		}
 		
 		// if performance api required, but api not available, disable
 		var disableTool = (script.requiresPerformanceApi && window.performance == null);
@@ -172,7 +240,26 @@ var ScalePerformanceBarClass = function() {
 		};
 		
 		link.className += (disableTool ? " disabled" : "");
-		link.innerHTML = script.name;
+		
+		link._onToolStartTrigger = script.onclick;
+		
+		if(script.name != null)
+		{
+			var fullName = document.createElement("span");
+			fullName.className = "fullName";
+			fullName.innerHTML = script.name;
+			fullName._onToolStartTrigger = script.onclick;
+			link.appendChild(fullName);
+		}
+		
+		if(script.symbol != null)
+		{
+			var symbol = document.createElement("span");
+			symbol.className = "symbol";
+			symbol.innerHTML = script.symbol;
+			symbol._onToolStartTrigger = script.onclick;
+			link.appendChild(symbol);
+		}
 		
 		if(disableTool)
 		{
@@ -180,87 +267,76 @@ var ScalePerformanceBarClass = function() {
 		}
 		else
 		{
-			link._onToolStartTrigger = script.onclick;
-			
-			link.onclick = function(elem) {
-				var index = elem.target.data.scriptIndex;
-				var script = superClass.scripts[index];
-				
-				superClass.topBarContainer.style.display = "none";
-				superClass.toolActiveBar.style.display = "block";
-				toolBarActiveTitle.innerHTML = elem.target.innerHTML;
-				
-				// Add method to remove script after closing tool
-				addFunctionOnToolClose(function() {
-					var scriptElem = document.getElementById('PerfScript' + index);
+			if(script.url != null)
+			{
+				link.href = script.url;
+				link.target = "_blank";
+			}
+			else
+			{
+				link.onclick = function(elem) {
+					var index = (elem.target.data != null ? elem.target.data.scriptIndex : elem.target.parentNode.data.scriptIndex);
+					var script = superClass.scripts[index];
 					
-					scriptElem.parentNode.removeChild(scriptElem);
-				});
-				
-				if(typeof(elem.target._onToolStartTrigger) == "function")
-				{
-					elem.target._onToolStartTrigger();
-				}
-				
-				// Load specified script
-				var jselem = document.createElement("script");
-				jselem.id = "PerfScript" + index;
-				jselem.type = "text/javascript";
-				
-				// Decide whether to load local or public script
-				if(superClass.isLocal && script.localHref != null)
-				{
-					console.log("tool loaded locally");
-					jselem.src = script.localHref + '?' + randomInt;
-				}
-				else
-				{
-					jselem.src = script.href + '?' + randomInt;
-				}
-				
-				document.getElementsByTagName("body")[0].appendChild(jselem);
-				
-				superClass.avoidPageOverlapWithBar();
-			};
+					if(typeof(elem.target._onToolStartTrigger) == "function")
+					{
+						elem.target._onToolStartTrigger();
+					}
+					
+					if(script.href == null && script.localHref == null) return;
+					
+					superClass.topBarContainer.style.display = "none";
+					superClass.toolActiveBar.style.display = "block";
+					toolBarActiveTitle.innerHTML = script.name || script.symbol;
+					
+					// Add method to remove script after closing tool
+					addFunctionOnToolClose(function() {
+						var scriptElem = document.getElementById('PerfScript' + index);
+						
+						scriptElem.parentNode.removeChild(scriptElem);
+					});
+					
+					// Load specified script
+					var jselem = document.createElement("script");
+					jselem.id = "PerfScript" + index;
+					jselem.type = "text/javascript";
+					
+					// Decide whether to load local or public script
+					if(superClass.isLocal && script.localHref != null)
+					{
+						console.log("tool loaded locally");
+						jselem.src = script.localHref;
+					}
+					else
+					{
+						jselem.src = script.href;
+					}
+					
+					document.getElementsByTagName("body")[0].appendChild(jselem);
+					
+					superClass.avoidPageOverlapWithBar();
+				};
+			}
 		}
 		
-		topBar.appendChild(link);
-		
-		if(i < maxIndex)
-		{
-			var separatorElem = document.createElement("span");
-			separatorElem.className = "perfSeparator";
-			separatorElem.innerHTML = "&middot;";
-			topBar.appendChild(separatorElem);
-		}
+		if(script.pullToSymbols) symbolsBlock.appendChild(link);
+		else topBar.appendChild(link);
 	}
 
 	var separatorElem = document.createElement("hr");
 	separatorElem.className = "perfCloseSeparator";
 	topBar.appendChild(separatorElem);
-
-	// Add close button
-	var close = document.createElement("a");
-	close.className = "perfClose";
-	close.innerHTML = "X";
-	close.onclick = function() {
-		superClass.topBarContainer.style.display = "none";
-		
-		superClass.avoidPageOverlapWithBar();
-	};
 	
-	topBar.appendChild(close);
-	var close = document.createElement("a");
-	close.href = "https://github.com/SCALE-Team/scale-perf/blob/master/README.md";
-	close.className = "perfHelp";
-	close.innerHTML = "?";
-	topBar.appendChild(close);
-
-	/* Tool close button */ {
+	/* Tool Active Bary */ {
 		superClass.toolActiveBar = document.createElement("div");
 		superClass.toolActiveBar.id = "PerfToolActiveBar";
+		superClass.toolActiveBar.superClass = this;
 		body.appendChild(superClass.toolActiveBar);
-
+		
+		var symbolsBlockInToolActiveBar = document.createElement("div");
+		symbolsBlockInToolActiveBar.className = "perf-symbols";
+		superClass.toolActiveBar.appendChild(symbolsBlockInToolActiveBar);
+		
 		// Add back button
 		var toolBarActiveBackButton = document.createElement("a");
 		toolBarActiveBackButton.className = "perfToolBackButton";
@@ -271,15 +347,18 @@ var ScalePerformanceBarClass = function() {
 		};
 		superClass.toolActiveBar.appendChild(toolBarActiveBackButton);
 		
-			// Add title bar
-			var toolBarActiveTitle = document.createElement("span");
-			toolBarActiveTitle.id = "PerfToolTitle";
-			toolBarActiveTitle.innerHTML = "Nice tool";
-			toolBarActiveBackButton.appendChild(toolBarActiveTitle);
+		// Add title bar
+		var toolBarActiveTitle = document.createElement("span");
+		toolBarActiveTitle.id = "PerfToolTitle";
+		toolBarActiveTitle.innerHTML = "Nice tool";
+		toolBarActiveBackButton.appendChild(toolBarActiveTitle);
 		
 		// Add close button
+		var symbolsBlockInToolActiveBar = document.createElement("div");
+		symbolsBlockInToolActiveBar.className = "perf-symbols";
+		superClass.toolActiveBar.appendChild(symbolsBlockInToolActiveBar);
+		
 		var closeToolActiveBar = document.createElement("a");
-		closeToolActiveBar.className = "perfClose";
 		closeToolActiveBar.innerHTML = "X";
 		closeToolActiveBar.onclick = function() {
 			//alert(22);
@@ -289,7 +368,7 @@ var ScalePerformanceBarClass = function() {
 			
 			superClass.avoidPageOverlapWithBar();
 		};
-		superClass.toolActiveBar.appendChild(closeToolActiveBar);
+		symbolsBlockInToolActiveBar.appendChild(closeToolActiveBar);
 	}
 
 	var _onCloseTool = [];
