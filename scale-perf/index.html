@@ -1,0 +1,107 @@
+<html>
+	<head>
+		<title>
+			Scale-Perf
+		</title>
+		
+		<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+		
+		<style>
+			body {
+				background:		#ddd;
+			}
+			
+			h1 {
+				margin:			30px auto;
+			}
+			
+			#Main {
+				background:		#fff;
+				border-radius:	5px;
+				padding:		5px;
+				margin:			0px auto;
+				box-shadow:		0px 0px 5px;
+			}
+
+			
+			@media (min-width: 980px) {
+				h1 {
+					width:			980px;
+				}
+				
+				#Main {
+					width:			980px;
+				}
+			}
+			
+			#MobileInstruction > li { list-style-type: none; }
+			#MobileInstruction:not(.s1) > li.s1 { display: none; }
+			#MobileInstruction:not(.s2) > li.s2 { display: none; }
+			#MobileInstruction:not(.s3) > li.s3 { display: none; }
+		</style>
+	</head>
+	<body>
+		<h1>SCALE performance bookmarklet</h1>
+		
+		<div id="Main" class="row">
+			<h2>Desktop</h2>
+			<div>
+				Drag and drop this intop your link bar: <a id="DesktopLink">Scale-Perf</a>
+			</div>
+			
+			<h2>Mobile</h2>
+			
+			<ol id="MobileInstruction" class="s1">
+				<li class="s1">1. Click this link: <a id="MobileLink" onclick="changeToStep(2)">SCALE Perf bookmarklet</a></li>
+				<li class="s2">
+					2. Bookmark this page<br />
+					<button class="btn" onclick="changeToStep(3)">ok, did it!</button>
+				</li>
+				<li class="s3">3.
+					Edit the bookmark URL and remove everything up to and including the hash ("#")
+					so that the bookmark URL starts with "javascript:"
+					<br />
+					Example:
+					<br />
+					<img class="img-responsive" src="images/mobileAddBokkmarkletExample.png" />
+				</li>
+			</ol>
+		</div>
+		
+		<script>
+			(function(){
+				var main = document.getElementById("Main");
+				
+				function scriptLoadFunction(){
+					var isLocal = ((self.location+"").split("http://").pop().split("/")[0] == "localhost");
+					var scriptPath = (isLocal ?
+						"http://localhost/perf-bookmarklet.js"
+						: "https://rawgit.com/scale-team/scale-perf/master/perf-bookmarklet.js");
+					
+					var body = document.getElementsByTagName("body")[0];
+					
+					var loadingElem = document.createElement("div");
+					loadingElem.innerHTML = "loading scale performance tests...";
+					loadingElem.style.cssText = "color:#fff;position:absolute;top:0;left:0;background-color:#000;padding:5;box-shadow:0 0 5px #000;";
+					
+					var jselem = document.createElement("script");
+					jselem.type = "text/javascript";
+					jselem.src = scriptPath + "?" + Math.round(Math.random() * Math.pow(2, 16));
+					jselem.onload = function() {
+						body.removeChild(loadingElem);
+					};
+					
+					body.appendChild(loadingElem).appendChild(jselem);
+				};
+				
+				var linkElem = document.getElementById("DesktopLink");
+				linkElem.href = 'javascript:' + scriptLoadFunction + '; scriptLoadFunction();';
+				document.getElementById("MobileLink").href = "#" + linkElem.href;
+			})();
+			
+			function changeToStep(nr){
+				document.getElementById("MobileInstruction").className = "s" + nr;
+			}
+		</script>
+	</body>
+</html>
