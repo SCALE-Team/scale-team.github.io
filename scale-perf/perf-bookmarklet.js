@@ -332,7 +332,8 @@ ScalePerformanceBarClass.prototype = {
 		style += "#PerfBar a.disabled { color: #555 !important; cursor: default; }";
 		style += "#PerfBar a.disabled:hover { background-color: transparent !important; }";
 		
-		style += "#PerfBar .perf-symbols, #PerfToolActiveBar .perf-symbols { position: absolute; top: 0px; right: 0px; vertical-align: middle !important; }";
+		style += "#PerfBar .perf-symbols, #PerfToolActiveBar .perf-symbols { position: absolute; top: 0px; right: 0px; }";
+		style += "#PerfBar .perf-symbols > *, #PerfToolActiveBar .perf-symbols > * { vertical-align: middle !important; }";
 		style += "#PerfBar .perf-symbols > a, #PerfToolActiveBar .perf-symbols > a { width: 30px; text-align: center; }";
 		style += "#PerfBar .perf-symbols .fullName { display: none;  }";
 		
