@@ -277,7 +277,7 @@
 			var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 			var height = (entriesToShow.length + 1) * (rowHeight + rowPadding); // +1 for axis
 			
-			width -= 20;
+			width -= 25;
 			
 			this.toolContainer.style.width = "100%";
 			
