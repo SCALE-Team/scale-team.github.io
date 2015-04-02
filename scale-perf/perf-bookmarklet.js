@@ -1,67 +1,25 @@
 var ScalePerformanceBarClass = function() {
 	var superClass = this;
 	
-	superClass.isLocal = ((self.location+"").split("http://").pop().split("/")[0] == "localhost");
-
+	// add all CSS styles
+	this.addStyles();
+	
+	
 	var body = document.getElementsByTagName("body")[0];
-	var head = document.head || document.getElementsByTagName('head')[0];
-
-	var cssElem = document.createElement("style");
-	cssElem.id = "PerfBookmarkletStyle";
-	var style = "#PerfBar, #PerfToolActiveBar { z-index: 1000000; color: #fff; position: fixed; top: 0px; left: 0px; width: 100%; background-color: #000; box-shadow: 0px 0px 5px #000; }";
-	style += "#PerfBar { transition:transform ease-out 0.3s; transform:translateY(-450px); -webkit-transition:-webkit-transform ease-out 0.3s; -webkit-transform:translateY(-450px); }";
-	style += "#PerfBar #Perf-logo { height: 20px; }";
-	style += "#PerfToolActiveBar { display: none; }";
-	style += "#PerfBar > div, { padding-right: 50px; }";
-	style += "#PerfBar > div a, #PerfToolActiveBar a { display: inline-block; cursor: pointer; text-decoration: none !important; color: #fff !important; display: inline-block; padding: 5px; }";
-	style += "#PerfBar > div a:hover, #PerfToolActiveBar a:hover { background-color: red !important; }";
-	style += "#PerfBar > div a.disabled { color: #555 !important; cursor: default; }";
-	style += "#PerfBar > div a.disabled:hover { background-color: transparent !important; }";
 	
-	style += "#PerfBar .perfSeparator { cursor: default; }";
-	
-	style += "#PerfBar .perfCloseSeparator { display: none; }";
-	style += "@media (max-width: 768px) {";
-		style += "#PerfBar { height: auto !important; }";
-		style += "#PerfBar #Perf-logo { display: none; }";
-		style += "#PerfBar > div { padding: 0px; }";
-		style += "#PerfBar > div a { width:	100%; }";
-		style += "#PerfBar .perfSeparator { display: none; }";
-		style += "#PerfBar .perf-symbols { display: block; width: 100% !important; text-align: left !important; position: static !important; }";
-		style += "#PerfBar .perf-symbols > * { display: block; width: 100% !important; text-align: left !important; position: static !important; }";
-		style += "#PerfBar .perf-symbols .symbol { display: none; }";
-		style += "#PerfBar .perf-symbols .fullName { display: block !important; }";
-		style += "#PerfBar .perfCloseSeparator { display: block; }";
-	style += "}";
-	style += "#PerfBar .perf-symbols, #PerfToolActiveBar .perf-symbols { position: absolute; top: 0px; right: 0px; }";
-	style += "#PerfBar .perf-symbols > a, #PerfToolActiveBar .perf-symbols > a { width: 30px; text-align: center; }";
-	style += "#PerfBar .perf-symbols .fullName { display: none;  }";
-	style += "#PerfToolTitle { font-weight: bold; }";
-	style += "#PerfToolActiveBar .perfToolBackButton { font-weight: bold; }";
-
-	cssElem.innerHTML = style;
-	head.appendChild(cssElem);
-
+	// Create container element
 	superClass.topBarContainer = document.createElement("div");
 	superClass.topBarContainer.id = "PerfBar";
-	
 	body.appendChild(superClass.topBarContainer);
-
-	// For the transition animation
-	setTimeout(function(){
-		superClass.topBarContainer.style.cssText += 'transform:translateY(0px); -webkit-transform:translateY(0px);';
-	}, 10);
-
-	var topBar = document.createElement("div");
-	superClass.topBarContainer.appendChild(topBar);
-
+	
+	// For the transition animation (async execution to let it happen after current function executed)
+	setTimeout(function() {
+		superClass.topBarContainer.style['transform'] = "translateY(0px)";
+		superClass.topBarContainer.style['-webkit-transform'] = "translateY(0px)";
+	}, 0);
+	
+	// All tool scripts to be included
 	superClass.scripts = [
-		/*
-		{
-			name:	"Original",
-			href:	"//stevesouders.com/mobileperf/mobileperfbkm.js"
-		},
-		//*/
 		{
 			name:					"Performance Bookmarklet",
 			href:					"https://scale-team.github.io/scale-perf/tools/performanceBookmarklet.js",
@@ -81,8 +39,7 @@ var ScalePerformanceBarClass = function() {
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/waterfall.js",
 			onclick: function() {
-				addFunctionOnToolClose(function()
-				{
+				addFunctionOnToolClose(function() {
 					var waterfall = document.getElementById("PerfWaterfallDiv");
 					waterfall.parentNode.removeChild(waterfall);
 				});
@@ -94,8 +51,7 @@ var ScalePerformanceBarClass = function() {
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/perfmap.js",
 			onclick: function() {
-				addFunctionOnToolClose(function()
-				{
+				addFunctionOnToolClose(function() {
 					var elems = document.getElementsByClassName("perfmap");
 					while(elems.length > 0)
 					{
@@ -112,8 +68,7 @@ var ScalePerformanceBarClass = function() {
 			href:	"https://scale-team.github.io/scale-perf/tools/dommonster.js",
 			localHref:	"/tools/dommonster.js",
 			onclick:	function() {
-				addFunctionOnToolClose(function()
-				{
+				addFunctionOnToolClose(function() {
 					var r = document.getElementById("jr_results");
 					r.parentNode.removeChild(r);
 				});
@@ -128,7 +83,7 @@ var ScalePerformanceBarClass = function() {
 			href:		"https://scale-team.github.io/scale-perf/tools/stats.js",
 			localHref:	"/tools/stats.js",
 			onclick:	function() {
-				var displayStatsInterval = setInterval(function(){
+				var displayStatsInterval = setInterval(function() {
 					if(typeof Stats == "function")
 					{
 						clearInterval(displayStatsInterval);
@@ -149,13 +104,11 @@ var ScalePerformanceBarClass = function() {
 						
 						var interval = setInterval(function(){ stats.update(); }, 1000/60);
 						
-						//* SCALE perf bookmarklet extension
 						addFunctionOnToolClose(function()
 						{
 							body.removeChild(stats.domElement);
 							clearInterval(interval);
 						});
-						//*/
 					}
 				}, 100);
 			}
@@ -164,43 +117,7 @@ var ScalePerformanceBarClass = function() {
 			name:			"Help",
 			symbol:			"?",
 			pullToSymbols:	true,
-			url:			"https://github.com/SCALE-Team/scale-perf/blob/master/README.md#readme"		
-			/*
-			onclick: function() {
-				//self.location.href = "https://github.com/SCALE-Team/scale-perf/blob/master/README.md#readme";
-				
-				var jselem = document.createElement("script");
-				jselem.type = "text/javascript";
-				jselem.src = "https://scale-team.github.io/scale-perf/markdown.min.js";
-				jselem.onload = function() {
-					xmlhttp.onreadystatechange = function()
-					{
-						if (xmlhttp.readyState==4 && xmlhttp.status==200)
-						{
-							document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
-						}
-					}
-					
-					xmlhttp.open("GET", "ajax_info.txt",true);
-					xmlhttp.send();
-				};
-				body.appendChild(jselem);
-				
-				
-				return;
-				
-				var iframe = document.createElement("iframe");
-				iframe.src = "https://github.com/SCALE-Team/scale-perf/blob/master/README.md#readme";
-				body.appendChild(iframe);
-				
-				// For the transition animation
-				iframe.style.cssText += "transition:transform ease-out 0.3s; transform:translateY(-450px); -webkit-transition:-webkit-transform ease-out 0.3s; -webkit-transform:translateY(-450px);";
-				
-				setTimeout(function(){
-					iframe.style.cssText += '-webkit-transform:translateY(30px); transform:translateY(30px);';
-				}, 10);
-			}
-			//*/
+			url:			"https://github.com/SCALE-Team/scale-perf/blob/master/README.md#readme"	
 		},
 		{
 			name:			"Close",
@@ -214,6 +131,13 @@ var ScalePerformanceBarClass = function() {
 			}
 		}
 	];
+	
+	var toolsMenu = document.createElement("div");
+	superClass.topBarContainer.appendChild(toolsMenu);
+	
+	var separatorElem = document.createElement("hr");
+	separatorElem.className = "perfSymbolsSeparator";
+	superClass.topBarContainer.appendChild(separatorElem);
 	
 	var symbolsBlock = document.createElement("div");
 	symbolsBlock.className = "perf-symbols";
@@ -235,7 +159,7 @@ var ScalePerformanceBarClass = function() {
 			var separatorElem = document.createElement("span");
 			separatorElem.className = "perfSeparator";
 			separatorElem.innerHTML = "&middot;";
-			topBar.appendChild(separatorElem);
+			toolsMenu.appendChild(separatorElem);
 		}
 		
 		// if performance api required, but api not available, disable
@@ -292,7 +216,7 @@ var ScalePerformanceBarClass = function() {
 					
 					if(script.href == null && script.localHref == null) return;
 					
-					superClass.topBarContainer.style.display = "none";
+					toolsMenu.style.display = "none";
 					superClass.toolActiveBar.style.display = "block";
 					toolBarActiveTitle.innerHTML = script.name || script.symbol;
 					
@@ -309,7 +233,7 @@ var ScalePerformanceBarClass = function() {
 					jselem.type = "text/javascript";
 					
 					// Decide whether to load local or public script
-					if(superClass.isLocal && script.localHref != null)
+					if(superClass.isLocal() && script.localHref != null)
 					{
 						console.log("tool loaded locally");
 						jselem.src = script.localHref;
@@ -327,12 +251,8 @@ var ScalePerformanceBarClass = function() {
 		}
 		
 		if(script.pullToSymbols) symbolsBlock.appendChild(link);
-		else topBar.appendChild(link);
+		else toolsMenu.appendChild(link);
 	}
-
-	var separatorElem = document.createElement("hr");
-	separatorElem.className = "perfCloseSeparator";
-	topBar.appendChild(separatorElem);
 	
 	/* Tool Active Bary */ {
 		superClass.toolActiveBar = document.createElement("div");
@@ -397,6 +317,52 @@ var ScalePerformanceBarClass = function() {
 ScalePerformanceBarClass.prototype = {
 	topBarContainer:	null,
 	oldBodyPaddingTop:	0,
+	
+	addStyles: function() {
+		var head = document.head || document.getElementsByTagName('head')[0];
+		
+		var cssElem = document.createElement("style");
+		cssElem.id = "PerfBookmarkletStyle";
+		var style = "#PerfBar, #PerfToolActiveBar { font-family: Arial !important; font-size: 14px !important; z-index: 1000000; color: #fff; position: fixed; top: 0px; left: 0px; width: 100%; background-color: #000; box-shadow: 0px 0px 5px #000; }";
+		style += "#PerfBar { transition:transform ease-out 0.3s; transform:translateY(-450px); -webkit-transition:-webkit-transform ease-out 0.3s; -webkit-transform:translateY(-450px); }";
+		style += "#PerfBar #Perf-logo { height: 20px; }";
+		style += "#PerfToolActiveBar { display: none; }";
+		style += "#PerfBar a, #PerfToolActiveBar a { display: inline-block; cursor: pointer; text-decoration: none !important; color: #fff !important; display: inline-block; padding: 5px; }";
+		style += "#PerfBar a:hover, #PerfToolActiveBar a:hover { background-color: red !important; }";
+		style += "#PerfBar a.disabled { color: #555 !important; cursor: default; }";
+		style += "#PerfBar a.disabled:hover { background-color: transparent !important; }";
+		
+		style += "#PerfBar .perf-symbols, #PerfToolActiveBar .perf-symbols { position: absolute; top: 0px; right: 0px; vertical-align: middle !important; }";
+		style += "#PerfBar .perf-symbols > a, #PerfToolActiveBar .perf-symbols > a { width: 30px; text-align: center; }";
+		style += "#PerfBar .perf-symbols .fullName { display: none;  }";
+		
+		style += "#PerfBar .perfSeparator { cursor: default; }";
+		
+		style += "#PerfBar .perfSymbolsSeparator { display: none; }";
+		style += "@media (max-width: 768px) {";
+			style += "#PerfBar { height: auto !important; }";
+			style += "#PerfBar #Perf-logo { display: none; }";
+			style += "#PerfBar { padding: 0px; }";
+			style += "#PerfBar a { width:	100%; }";
+			style += "#PerfBar .perfSeparator { display: none; }";
+			
+			style += "#PerfBar .perf-symbols { display: block; width: 100% !important; text-align: left !important; position: static !important; }";
+			style += "#PerfBar .perf-symbols > * { display: block; width: 100% !important; text-align: left !important; position: static !important; }";
+			style += "#PerfBar .perf-symbols .symbol { display: none; }";
+			style += "#PerfBar .perf-symbols .fullName { display: block !important; }";
+			style += "#PerfBar .perfSymbolsSeparator { display: block; }";
+		style += "}";
+		style += "#PerfToolTitle { font-weight: bold; }";
+		style += "#PerfToolActiveBar .perfToolBackButton { font-weight: bold; }";
+
+		cssElem.innerHTML = style;
+		head.appendChild(cssElem);
+	},
+	
+	isLocal: function() {
+		// Flag if this script is executes locally or not
+		return ((self.location+"").split("http://").pop().split("/")[0] == "localhost");
+	},
 	
 	show: function() {
 		// Detect height of performance bar
