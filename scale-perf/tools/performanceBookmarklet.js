@@ -325,6 +325,12 @@ if(window.performance && window.performance.getEntriesByType !== undefined) {
 	return;
 }
 
+/* SCALE bookmarklet extension */ {
+	data.resources = scalePerformanceBar.helpers.removeOwnSourcesFromRessources(data.resources);
+	data.marks = scalePerformanceBar.helpers.removeOwnSourcesFromRessources(data.marks);
+	data.measures = scalePerformanceBar.helpers.removeOwnSourcesFromRessources(data.measures);
+}
+
 if(window.performance.timing){
 	data.perfTiming = window.performance.timing;
 }else{

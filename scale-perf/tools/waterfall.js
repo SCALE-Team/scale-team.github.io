@@ -1,9 +1,21 @@
 (function() {
-	function Waterfall() {
+	function Waterfall(conf) {
 		// Check for Navigation Timing and Resource Timing APIs
 		if(window.performance == null || (window.performance.getEntriesByType == null && window.performance.webkitGetEntriesByType == null))
 		{
 			alert("Resource Timing API not supported");
+			return;
+		}
+		
+		conf = conf||{};
+		
+		// Remmeber configs
+		this.getPageLoadTime = conf.getPageLoadTime;
+		
+		// look for erros
+		if(typeof(this.getPageLoadTime) != "function")
+		{
+			alert("Waterfall.js: config.getPageLoadTime must be set in constructor!");
 			return;
 		}
 		
@@ -239,21 +251,12 @@
 			superClass.chartContainer = document.createElement("div");
 			superClass.chartContainer.id = "ChartContainer";
 			superClass.chartContainer.data = {
-				filesToHide:	[ "perf-bookmarklet.js", "tools/dommonster.js", "tools/perfmap.js", "tools/performanceBookmarklet.js", "tools/stats.js", "tools/waterfall.js" ],
 				allowed:		[],
 				nowAllowed:		[],
 				searchText:		"",
 				timeSpan:		superClass.getPageLoadTime(entries)
 			};
 			superClass.toolContainer.appendChild(superClass.chartContainer);
-			
-			/* For the transition animation */ {
-				superClass.toolContainer.style.cssText += "transition:transform ease-out 0.3s; transform:translateY(-450px); -webkit-transition:-webkit-transform ease-out 0.3s; -webkit-transform:translateY(-450px);";
-				
-				setTimeout(function(){
-					superClass.toolContainer.style.cssText += '-webkit-transform:translateY(30px); transform:translateY(30px);';
-				}, 10);
-			}
 			
 			superClass.drawAllBars(entries);
 		},
@@ -309,7 +312,7 @@
 
 				var row = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
 
-				row.appendChild(this.svg.createSVGText(5, 0, 0, rowHeight, "font: 10px sans-serif;", "start", this.shortenURL(entry.url)));
+				row.appendChild(this.svg.createSVGText(5, 0, 0, rowHeight, "font: 10px sans-serif;", "start", this.shortenURL(entry.url), entry.url));
 
 				row.appendChild(this.drawBar(entry, barOffset, rowHeight, scaleFactor));
 
@@ -364,20 +367,6 @@
 			return bar;
 		},
 		
-		getPageLoadTime: function(entries) {
-			var pageLoadTime = 0;
-			for(var f in entries)
-			{
-				var entry = entries[f];
-				
-				if((entry.start - pageLoadTime) >= 2000) break;
-				
-				pageLoadTime = entry.start + entry.duration;
-			}
-			
-			return Math.round(pageLoadTime);
-		},
-		
 		filterEntries: function(entries) {
 			//this.chartContainer = document.getElementById("ChartContainer");
 			this.chartContainer.innerHTML = "";
@@ -386,7 +375,6 @@
 			var notAllowed = this.chartContainer.data.notAllowed;
 			var searchText = this.chartContainer.data.searchText;
 			var timeSpan = this.chartContainer.data.timeSpan;
-			var filesToHide = this.chartContainer.data.filesToHide;
 			
 			// Filter entries
 			var filteredEntries = [];
@@ -399,24 +387,15 @@
 				
 				if(allowed != null && allowed.length > 0 && allowed.indexOf(ending) == -1) continue;
 				if(notAllowed != null && notAllowed.length > 0 && notAllowed.indexOf(ending) != -1) continue;
-				if(searchText.length > 0 && url.indexOf(searchText) == -1) continue;
 				if(timeSpan > 0 && startTime > timeSpan) continue;
-				if(filesToHide != null)
+				if(searchText.length > 0 && url.indexOf(searchText) == -1) continue;
+				/*
+				else
 				{
-					var hideThis = false;
-					for(var g in filesToHide)
-					{
-						var hideMe = filesToHide[g];
-						
-						if(url.length >= hideMe.length && hideMe == url.substr(url.length - hideMe.length))
-						{
-							hideThis = true;
-							break;
-						}
-					}
-					
-					if(hideThis) continue;
+					entries[f].url = url.replace(searchText, "<b>" + searchText + "</b>");
+					console.log(url);
 				}
+				//*/
 				
 				filteredEntries.push(entries[f]);
 			}
@@ -443,6 +422,10 @@
 			}
 			else if(window.performance.webkitGetEntriesByType !== undefined) {
 				resources = window.performance.webkitGetEntriesByType("resource");
+			}
+			
+			/* SCALE bookmarklet extension */ {
+				resources = scalePerformanceBar.helpers.removeOwnSourcesFromRessources(resources);
 			}
 			
 			for(var n = 0; n < resources.length; n++) {
@@ -614,7 +597,7 @@
 			 * @param {string} text
 			 * @returns {element} SVG Text element
 			 */
-			createSVGText: function(x, y, dx, dy, style, anchor, text) {
+			createSVGText: function(x, y, dx, dy, style, anchor, text, title) {
 				var el = document.createElementNS(this.xmlns, "text");
 
 				el.setAttribute("x", x);
@@ -623,6 +606,7 @@
 				el.setAttribute("dy", dy);
 				el.setAttribute("style", style);
 				el.setAttribute("text-anchor", anchor);
+				if(title != null) el.setAttribute("title", title);
 
 				el.appendChild(document.createTextNode(text));
 
@@ -631,5 +615,5 @@
 		}
 	};
 	
-	new Waterfall();
+	new Waterfall({ getPageLoadTime: scalePerformanceBar.helpers.getPageLoadTimeFromRessources });
 })();
