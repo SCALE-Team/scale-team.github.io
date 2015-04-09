@@ -471,7 +471,7 @@ ScalePerformanceBarClass.prototype = {
 		
 		// Hide the tools bar
 		hide: function() {
-			this.bar.style.top = "-40 px";
+			this.bar.style.top = "-40px";
 		},
 		
 		onCloseTool: function(func) {
