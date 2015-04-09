@@ -7,6 +7,8 @@ var ScalePerformanceBarClass = function() {
 	// add all CSS styles
 	this.addStyles();
 	
+	this.putPageContentsToDiv();
+	
 	// Add the menu
 	this.menu.addBar();
 	
@@ -14,7 +16,10 @@ var ScalePerformanceBarClass = function() {
 	this.tools.addBar();
 	
 	// show the menu
-	this.menu.show();
+	var superClass = this;
+	window.setTimeout(function(){
+		superClass.menu.show();
+	}, 0);
 };
 
 ScalePerformanceBarClass.prototype = {
@@ -27,15 +32,8 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/performanceBookmarklet.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/performanceBookmarklet.js",
-			onclick: function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var waterfall = document.getElementById("perfbook-iframe");
-					waterfall.parentNode.removeChild(waterfall);
-				});
-				
-				superClass.helpers.waitForExist("perfbook-iframe", function(elem) {
-					superClass.helpers.animate(elem, 1000, 30);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new PerfBookmarklet();
 			}
 		},
 		{
@@ -43,15 +41,8 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/waterfall.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/waterfall.js",
-			onclick: function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var waterfall = document.getElementById("PerfWaterfallDiv");
-					waterfall.parentNode.removeChild(waterfall);
-				});
-				
-				superClass.helpers.waitForExist("PerfWaterfallDiv", function(elem) {
-					superClass.helpers.animate(elem, 450, 30);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new Waterfall({ getPageLoadTime: superClass.helpers.getPageLoadTimeFromResources });
 			}
 		},
 		{
@@ -59,73 +50,24 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/perfmap.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/perfmap.js",
-			onclick: function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var elems = document.getElementsByClassName("perfmap");
-					while(elems.length > 0)
-					{
-						elems[0].parentNode.removeChild(elems[0]);
-					}
-					
-					var perfmap = document.getElementById("perfmap");
-					perfmap.parentNode.removeChild(perfmap);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new PerfMap();
 			}
 		},
 		{
-			name:	"Analyze DOM tree",
-			href:	"https://scale-team.github.io/scale-perf/tools/dommonster.js",
+			name:		"Analyze DOM tree",
+			href:		"https://scale-team.github.io/scale-perf/tools/dommonster.js",
 			localHref:	"/tools/dommonster.js",
-			onclick:	function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var r = document.getElementById("jr_results");
-					r.parentNode.removeChild(r);
-					
-					var iframe = document.getElementsByClassName("dommonster_iframe")[0];
-					iframe.parentNode.removeChild(iframe);
-				});
-				
-				// Add some styles
-				superClass.styleElem.innerHTML += "#jr_stats { float: none !important; width: 100% !important; top:	-450px; }";
-				superClass.styleElem.innerHTML += "#jr_stats > div { display: inline-block !important; width: 210px !important; }";
-				superClass.styleElem.innerHTML += "#jr_stats > div > div:first-child { width: 20px !important; height: 20px !important; margin-right: 5px !important; }";
-				
-				superClass.helpers.waitForExist("jr_results", function(elem) {
-					superClass.helpers.animate(elem, 450, 30);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new DomMonster();
 			}
 		},
 		{
 			name:		"FPS display",
 			href:		"https://scale-team.github.io/scale-perf/tools/stats.js",
 			localHref:	"/tools/stats.js",
-			onclick:	function(superClass) {
-				var body = document.getElementsByTagName("body")[0];
-				
-				var displayStatsInterval = window.setInterval(function() {
-					if(typeof Stats == "function")
-					{
-						window.clearInterval(displayStatsInterval);
-						
-						var stats = new Stats();
-						stats.domElement.style.position = "fixed";
-						stats.domElement.style.left = "0px";
-						stats.domElement.style.top = "0px";
-						stats.domElement.style.zIndex = "10000";
-						body.appendChild(stats.domElement);
-						
-						// for the transition animation
-						superClass.helpers.animate(stats.domElement, 100, 30);
-						
-						var interval = window.setInterval(function(){ stats.update(); }, 1000/60);
-						
-						superClass.tools.onCloseTool(function()
-						{
-							body.removeChild(stats.domElement);
-							window.clearInterval(interval);
-						});
-					}
-				}, 100);
+			onload: function(superClass) {
+				superClass.tools.activeTool = new Stats();
 			}
 		},
 		{
@@ -139,10 +81,7 @@ ScalePerformanceBarClass.prototype = {
 			symbol:			"X",
 			pullToSymbols:	true,
 			onclick: function(superClass) {
-				var bar = document.getElementById("ToolsActiveBar");
-				
-				bar.superClass.menu.bar.style.display = "none";
-				bar.superClass.helpers.avoidPageOverlapWithBar();
+				superClass.menu.hide();
 			}
 		}
 	],
@@ -153,9 +92,8 @@ ScalePerformanceBarClass.prototype = {
 		this.styleElem = document.createElement("style");
 		this.styleElem.id = "PerfBookmarkletStyle";
 		
-		var style = "#PerfBar, #ToolsActiveBar { font-family: Arial !important; font-size: 14px !important; z-index: 1000000; color: #fff; position: fixed; top: 0px; left: 0px; width: 100%; background-color: #000; box-shadow: 0px 0px 5px #000; }";
+		var style = "#PerfBar, #ToolsActiveBar { font-family: Arial !important; font-size: 14px !important; z-index: 1000000; color: #fff; position: fixed; top: -40px; left: 0px; width: 100%; background-color: #000; box-shadow: 0px 0px 5px #000; }";
 		style += "#PerfBar #Perf-logo { height: 20px; }";
-		style += "#ToolsActiveBar { display: none; }";
 		style += "#PerfBar a, #ToolsActiveBar a { display: inline-block; cursor: pointer; text-decoration: none !important; color: #fff !important; display: inline-block; padding: 5px; }";
 		style += "#PerfBar a:hover, #ToolsActiveBar a:hover { background-color: red !important; }";
 		style += "#PerfBar a.disabled { color: #555 !important; cursor: default; }";
@@ -184,9 +122,34 @@ ScalePerformanceBarClass.prototype = {
 		style += "}";
 		style += "#PerfToolTitle { font-weight: bold; }";
 		style += "#ToolsActiveBar .perfToolBackButton { font-weight: bold; }";
+		
+		style += "#ScalePageContent { position: absolute; left: 0px; top: 0px; width: 100%; }";
+		
+		style += "#PerfBar, #ToolsActiveBar { transition: top ease-out 0.5s, opacity ease-out 0.5s; -webkit-transition: top ease-out 0.5s, opacity ease-out 0.5s; }";
+		style += "#ScalePageContent { transition: top ease-out 0.5s, opacity ease-out 0.5s; -webkit-transition: top ease-out 0.5s, opacity ease-out 0.5s; }";
 
 		this.styleElem.innerHTML = style;
 		head.appendChild(this.styleElem);
+	},
+	
+	putPageContentsToDiv: function() {
+		var body = document.getElementsByTagName("body")[0];
+		
+		this.pageContent = document.createElement("div");
+		this.pageContent.id = "ScalePageContent";
+		
+		for(var i = (body.childNodes.length - 1); i>=0; i--)
+		{
+			if(body.childNodes[i].nodeName == "SCRIPT") continue;
+			if(body.childNodes[i].id == "ScalePerfLoadingHint") continue;
+			if(body.childNodes[i].id == "PerfBar") continue;
+			if(body.childNodes[i].id == "ToolsActiveBar") continue;
+			
+			if(this.pageContent.childNodes.length == 0) this.pageContent.appendChild(body.childNodes[i]);
+			else this.pageContent.insertBefore(body.childNodes[i], this.pageContent.firstChild);
+		}
+		
+		body.appendChild(this.pageContent);
 	},
 	
 	menu: {
@@ -206,9 +169,6 @@ ScalePerformanceBarClass.prototype = {
 			menu.bar.id = "PerfBar";
 			menu.bar.superClass = superClass;
 			body.appendChild(menu.bar);
-			
-			// For the transition animation
-			superClass.helpers.animate(menu.bar, 30);
 			
 			/* Build the scaffold for the bar */ {
 				// Container for the tool links
@@ -281,7 +241,28 @@ ScalePerformanceBarClass.prototype = {
 				else
 				{
 					link.href = "javascript:;";
-					link.onclick = menu._onLinkClick;
+					link.onclick = function(e) {
+						superClass.tools.onActiveToolLoaded(function() {
+							// Wait for the tool container to exist and afterwards move the page content down
+							superClass.helpers.waitForElementExist(superClass.tools.activeTool.containerId, function(containerElem) {
+								containerElem.style.top = -containerElem.offsetHeight + "px";
+								containerElem.style.visibility = "visible";
+								containerElem.style.transition = containerElem.style['-webkit-transition'] = "top ease-out 0.5s, opacity ease-out 0.5s";
+								
+								window.setTimeout(function() {
+									containerElem.style.top = superClass.tools.bar.offsetHeight + "px";
+									
+									var pageContentTop = superClass.tools.bar.offsetHeight;
+									
+									if(!superClass.tools.activeTool.isContainerFixed) pageContentTop += containerElem.offsetHeight;
+									
+									superClass.pageContent.style.top = pageContentTop + "px";
+								}, 0);
+							});
+						});
+						
+						menu._onLinkClick(e);
+					};
 				}
 				
 				// Remember the onclick event in the link-element
@@ -312,14 +293,14 @@ ScalePerformanceBarClass.prototype = {
 		
 		// Show the menu bar
 		show: function() {
-			this.bar.style.display = "block";
-			this.superClass.helpers.avoidPageOverlapWithBar();
+			this.bar.style.top = "0px";
+			this.superClass.pageContent.style.top = this.bar.offsetHeight + "px";
 		},
 		
 		// Hide the menu bar
 		hide: function() {
-			this.bar.style.display = "none";
-			this.superClass.helpers.avoidPageOverlapWithBar();
+			this.bar.style.top = (-this.bar.offsetHeight - 10) + "px";
+			this.superClass.pageContent.style.top = "0px";
 		},
 		
 		_onLinkClick: function(e) {
@@ -349,7 +330,7 @@ ScalePerformanceBarClass.prototype = {
 			
 			// Load specified script
 			var jselem = document.createElement("script");
-			jselem.id = "PerfScript" + script.index;
+			jselem.id = "PerfScript";
 			jselem.type = "text/javascript";
 			
 			// Decide whether to load local or public script
@@ -362,20 +343,31 @@ ScalePerformanceBarClass.prototype = {
 				jselem.src = script.href;
 			}
 			
+			if(script.onload != null)
+			{
+				jselem.onload = function() {
+					script.onload(superClass);
+					
+					if(tools.activeTool.onload != null) tools.activeTool.onload();
+					
+					tools.executeOnActiveToolLoaded();
+				}
+			}
+			
 			document.getElementsByTagName("body")[0].appendChild(jselem);
 			
 			// Add method to remove script after closing tool
-			superClass.tools.onCloseTool(function() {
+			superClass.tools.oncloseTool(function() {
 				jselem.parentNode.removeChild(jselem);
 			});
 			
-			superClass.helpers.avoidPageOverlapWithBar();
+			//superClass.helpers.avoidPageOverlapWithBar();
 		}
 	},
 	
 	tools: {
 		superClass:		null,
-		_onCloseTool:	[],
+		_oncloseTool:	[],
 		bar:			null,
 		
 		addBar: function() {
@@ -400,11 +392,8 @@ ScalePerformanceBarClass.prototype = {
 				toolBarActiveBackButton.href = "javascript:;";
 				toolBarActiveBackButton.innerHTML = "< ";
 				toolBarActiveBackButton.onclick = function() {
-					// Show menu bar
-					superClass.menu.show();
-					
 					// Trigger close of tool-active bar
-					close.onclick();
+					close.onclick(true);
 				};
 				tools.bar.appendChild(toolBarActiveBackButton);
 				
@@ -422,12 +411,31 @@ ScalePerformanceBarClass.prototype = {
 				var close = document.createElement("a");
 				close.href = "javascript:;";
 				close.innerHTML = "X";
-				close.onclick = function() {
+				close.onclick = function(isBackButton) {
 					tools.hide();
 					
-					superClass.tools.executeOnCloseTool();
+					// if back button was triggered originally
+					if(isBackButton === true)
+					{
+						// Show menu bar
+						superClass.menu.show();
+					}
+					else
+					{
+						// Set page content back to normal position
+						superClass.pageContent.style.top = "0px";
+					}
 					
-					superClass.helpers.avoidPageOverlapWithBar();
+					var elem = document.getElementById(tools.activeTool.containerId);
+					elem.style.top = -elem.offsetHeight + "px";
+					
+					window.setTimeout(function() {
+						// Remove the tool script
+						var scriptElem = document.getElementById("PerfScript");
+						scriptElem.parentNode.removeChild(scriptElem);
+						
+						if(tools.activeTool.onclose != null) tools.activeTool.onclose();
+					}, 500);
 				};
 				symbolsBlock.appendChild(close);
 			}
@@ -435,24 +443,41 @@ ScalePerformanceBarClass.prototype = {
 		
 		// Show the tools bar
 		show: function() {
-			this.bar.style.display = "block";
-			this.superClass.helpers.avoidPageOverlapWithBar();
+			var superClass = this.superClass;
+			
+			this.bar.style.top = "0px";
+			
+			superClass.pageContent.style.top = superClass.tools.bar.offsetHeight + "px";
 		},
 		
 		// Hide the tools bar
 		hide: function() {
-			this.bar.style.display = "none";
-			this.superClass.helpers.avoidPageOverlapWithBar();
+			var superClass = this.superClass;
+			
+			this.bar.style.top = (-this.bar.offsetHeight - 10) + "px";
 		},
 		
-		onCloseTool: function(func) {
-			this._onCloseTool.push(func);
+		oncloseTool: function(func) {
+			this._oncloseTool.push(func);
 		},
 		
-		executeOnCloseTool: function(func) {
-			while(this._onCloseTool.length > 0)
+		executeoncloseTool: function(func) {
+			while(this._oncloseTool.length > 0)
 			{
-				var func = this._onCloseTool.pop();
+				var func = this._oncloseTool.pop();
+				func();
+			}
+		},
+		
+		_onActiveToolLoaded: [],
+		onActiveToolLoaded: function(func) {
+			this._onActiveToolLoaded.push(func);
+		},
+		
+		executeOnActiveToolLoaded: function(func) {
+			while(this._onActiveToolLoaded.length > 0)
+			{
+				var func = this._onActiveToolLoaded.pop();
 				func();
 			}
 		}
@@ -464,33 +489,30 @@ ScalePerformanceBarClass.prototype = {
 			return ((self.location+"").split("http://").pop().split("/")[0] == "localhost");
 		},
 		
-		oldBodyPaddingTop:	0,
+		/*
 		avoidPageOverlapWithBar: function() {
 			var superClass = this.superClass;
 			
 			var body = document.getElementsByTagName("body")[0];
 			
-			if(superClass.helpers.oldBodyPaddingTop != 0)
-			{
-				body.style.paddingTop = superClass.helpers.oldBodyPaddingTop.split("px")[0] * 1.0;
-				
-				superClass.helpers.oldBodyPaddingTop = 0;
-			}
-			
-			superClass.menu.barHeight = Math.max(superClass.menu.bar.offsetHeight, superClass.tools.bar.offsetHeight);
-			
-			// Detect and remember the current padding of the page
-			superClass.helpers.oldBodyPaddingTop = body.offsetTop * 1.0;
+			var h1 = (superClass.menu.bar != null ? superClass.menu.bar.offsetHeight : 0);
+			var h2 = (superClass.tools.bar != null ? superClass.tools.bar.offsetHeight : 0);
+			superClass.menu.barHeight = Math.max(h1, h2);
 			
 			// move the page to the right place
-			body.style.paddingTop = (superClass.helpers.oldBodyPaddingTop + superClass.menu.barHeight) + "px";
+			superClass.pageContent.style.top = (superClass.menu.barHeight) + "px";
 		},
+		//*/
 		
 		animate: function(elem, height, endPosition) {
 			endPosition = endPosition||0;
 			
-			elem.style.opacity = 0;
-			elem.style.top = -height + "px";
+			if(height != null)
+			{
+				elem.style.opacity = 0;
+				elem.style.top = -height + "px";
+			}
+			
 			elem.style.transition = elem.style['-webkit-transition'] = "top ease-out 0.5s, opacity ease-out 0.5s";
 			
 			// async execution to let it happen after current function executed
@@ -500,7 +522,7 @@ ScalePerformanceBarClass.prototype = {
 			}, 0);
 		},
 		
-		waitForExist: function(elemId, callback) {
+		waitForElementExist: function(elemId, callback) {
 			var interval = window.setInterval(function() {
 				var element = document.getElementById(elemId);
 				
@@ -514,12 +536,12 @@ ScalePerformanceBarClass.prototype = {
 		},
 		
 		filesToHide: [ "perf-bookmarklet.js", "tools/dommonster.js", "tools/perfmap.js", "tools/performanceBookmarklet.js", "tools/stats.js", "tools/waterfall.js" ],
-		removeOwnSourcesFromRessources: function(ressources) {
-			var filteredRessources = [];
+		removeOwnSourcesFromResources: function(resources) {
+			var filteredResources = [];
 			
-			for(var f in ressources)
+			for(var f in resources)
 			{
-				var r = ressources[f];
+				var r = resources[f];
 				var url = r.url || r.name;
 				
 				var hideThis = false;
@@ -536,21 +558,21 @@ ScalePerformanceBarClass.prototype = {
 				
 				if(hideThis) continue;
 				
-				filteredRessources.push(r);
+				filteredResources.push(r);
 			}
 			
-			return filteredRessources;
+			return filteredResources;
 		},
 		
-		getPageLoadTimeFromRessources: function(ressources) {
+		getPageLoadTimeFromResources: function(resources) {
 			var pageLoadTime = 0;
-			for(var f in ressources)
+			for(var f in resources)
 			{
-				var ressource = ressources[f];
+				var resource = resources[f];
 				
-				if((ressource.start - pageLoadTime) >= 2000) break;
+				if((resource.start - pageLoadTime) >= 2000) break;
 				
-				pageLoadTime = ressource.start + ressource.duration;
+				pageLoadTime = resource.start + resource.duration;
 			}
 			
 			return Math.round(pageLoadTime);
