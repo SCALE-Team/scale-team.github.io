@@ -1,3 +1,15 @@
+var PerfBookmarklet = function() {
+	return {
+		/* SCALE performance tool IO functions */
+			containerId:		"perfbook-iframe",
+			isContainerFixed:	false,
+			onclose: function() {
+				var iframe = document.getElementById(this.containerId);
+				iframe.parentNode.removeChild(iframe);
+			}
+	};
+};
+
 /*https://github.com/micmro/performance-bookmarklet
  by Michael Mrowetz @MicMro*/
 
@@ -431,11 +443,11 @@ var triggerEvent = function(element, name){
 
 var onIFrameLoaded = (function(){
 	var hasLoaded = false;
-	var callOnLoad = [];
+	var callonload = [];
 	var onIFrameLoadedCb = function(){
 		hasLoaded = true;
 		window.removeEventListener("iFrameLoaded", onIFrameLoadedCb, false);
-		callOnLoad.forEach(function(cb){
+		callonload.forEach(function(cb){
 			cb(helper, dom, svg);
 		})
 	};
@@ -444,7 +456,7 @@ var onIFrameLoaded = (function(){
 		if(hasLoaded){
 			cb(helper, dom, svg);
 		}else{
-			callOnLoad.push(cb);
+			callonload.push(cb);
 		}
 	};
 })();
@@ -473,7 +485,7 @@ if(iFrameEl){
 			
 			triggerEvent(window, "iFrameLoaded");
 		}
-	}, "position:absolute; margin-bottom:1em; z-index: 9999; width:100%; top:0px; left:0px; border:0; box-shadow:0 0 25px 0 rgba(0,0,0,0.5); background:#fff;");
+	}, "position:absolute; margin-bottom:1em; z-index: 9999; width:100%;left:0px; border:0; box-shadow:0 0 25px 0 rgba(0,0,0,0.5); background:#fff;");
 	document.body.appendChild(iFrameEl);
 }
 
@@ -1389,7 +1401,7 @@ onIFrameLoaded(function(helper, dom, svgs){
 		resourceSectionSegment("Response", calc.responseStart, calc.responseEnd, "#1977dd"),
 		resourceSectionSegment("DOM Processing", calc.domLoading, calc.domComplete, "#9cc"),
 		resourceSectionSegment("domContentLoaded Event", calc.domContentLoadedEventStart, calc.domContentLoadedEventEnd, "#d888df"),
-		resourceSectionSegment("Onload Event", calc.loadEventStart, calc.loadEventEnd, "#c0c0ff")
+		resourceSectionSegment("onload Event", calc.loadEventStart, calc.loadEventEnd, "#c0c0ff")
 	];
 
 	if(calc.secureConnectionStart){

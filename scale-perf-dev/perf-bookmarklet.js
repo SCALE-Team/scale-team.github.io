@@ -32,15 +32,8 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/performanceBookmarklet.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/performanceBookmarklet.js",
-			onclick: function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var waterfall = document.getElementById("perfbook-iframe");
-					waterfall.parentNode.removeChild(waterfall);
-				});
-				
-				superClass.helpers.waitForExist("perfbook-iframe", function(elem) {
-					superClass.helpers.animate(elem, 1000, 30);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new PerfBookmarklet();
 			}
 		},
 		{
@@ -48,15 +41,8 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/waterfall.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/waterfall.js",
-			onclick: function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var waterfall = document.getElementById("PerfWaterfallDiv");
-					waterfall.parentNode.removeChild(waterfall);
-				});
-				
-				superClass.helpers.waitForExist("PerfWaterfallDiv", function(elem) {
-					superClass.helpers.animate(elem, 450, 30);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new Waterfall({ getPageLoadTime: superClass.helpers.getPageLoadTimeFromResources });
 			}
 		},
 		{
@@ -64,73 +50,24 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/perfmap.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/perfmap.js",
-			onclick: function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var elems = document.getElementsByClassName("perfmap");
-					while(elems.length > 0)
-					{
-						elems[0].parentNode.removeChild(elems[0]);
-					}
-					
-					var perfmap = document.getElementById("perfmap");
-					perfmap.parentNode.removeChild(perfmap);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new PerfMap();
 			}
 		},
 		{
-			name:	"Analyze DOM tree",
-			href:	"https://scale-team.github.io/scale-perf/tools/dommonster.js",
+			name:		"Analyze DOM tree",
+			href:		"https://scale-team.github.io/scale-perf/tools/dommonster.js",
 			localHref:	"/tools/dommonster.js",
-			onclick:	function(superClass) {
-				superClass.tools.onCloseTool(function() {
-					var r = document.getElementById("jr_results");
-					r.parentNode.removeChild(r);
-					
-					var iframe = document.getElementsByClassName("dommonster_iframe")[0];
-					iframe.parentNode.removeChild(iframe);
-				});
-				
-				// Add some styles
-				superClass.styleElem.innerHTML += "#jr_stats { float: none !important; width: 100% !important; top:	-450px; }";
-				superClass.styleElem.innerHTML += "#jr_stats > div { display: inline-block !important; width: 210px !important; }";
-				superClass.styleElem.innerHTML += "#jr_stats > div > div:first-child { width: 20px !important; height: 20px !important; margin-right: 5px !important; }";
-				
-				superClass.helpers.waitForExist("jr_results", function(elem) {
-					superClass.helpers.animate(elem, 450, 30);
-				});
+			onload: function(superClass) {
+				superClass.tools.activeTool = new DomMonster();
 			}
 		},
 		{
 			name:		"FPS display",
 			href:		"https://scale-team.github.io/scale-perf/tools/stats.js",
 			localHref:	"/tools/stats.js",
-			onclick:	function(superClass) {
-				var body = document.getElementsByTagName("body")[0];
-				
-				var displayStatsInterval = window.setInterval(function() {
-					if(typeof Stats == "function")
-					{
-						window.clearInterval(displayStatsInterval);
-						
-						var stats = new Stats();
-						stats.domElement.style.position = "fixed";
-						stats.domElement.style.left = "0px";
-						stats.domElement.style.top = "0px";
-						stats.domElement.style.zIndex = "10000";
-						body.appendChild(stats.domElement);
-						
-						// for the transition animation
-						superClass.helpers.animate(stats.domElement, 100, 30);
-						
-						var interval = window.setInterval(function(){ stats.update(); }, 1000/60);
-						
-						superClass.tools.onCloseTool(function()
-						{
-							body.removeChild(stats.domElement);
-							window.clearInterval(interval);
-						});
-					}
-				}, 100);
+			onload: function(superClass) {
+				superClass.tools.activeTool = new Stats();
 			}
 		},
 		{
@@ -145,7 +82,6 @@ ScalePerformanceBarClass.prototype = {
 			pullToSymbols:	true,
 			onclick: function(superClass) {
 				superClass.menu.hide();
-				//superClass.helpers.avoidPageOverlapWithBar();
 			}
 		}
 	],
@@ -305,7 +241,28 @@ ScalePerformanceBarClass.prototype = {
 				else
 				{
 					link.href = "javascript:;";
-					link.onclick = menu._onLinkClick;
+					link.onclick = function(e) {
+						superClass.tools.onActiveToolLoaded(function() {
+							// Wait for the tool container to exist and afterwards move the page content down
+							superClass.helpers.waitForElementExist(superClass.tools.activeTool.containerId, function(containerElem) {
+								containerElem.style.top = -containerElem.offsetHeight + "px";
+								containerElem.style.visibility = "visible";
+								containerElem.style.transition = containerElem.style['-webkit-transition'] = "top ease-out 0.5s, opacity ease-out 0.5s";
+								
+								window.setTimeout(function() {
+									containerElem.style.top = superClass.tools.bar.offsetHeight + "px";
+									
+									var pageContentTop = superClass.tools.bar.offsetHeight;
+									
+									if(!superClass.tools.activeTool.isContainerFixed) pageContentTop += containerElem.offsetHeight;
+									
+									superClass.pageContent.style.top = pageContentTop + "px";
+								}, 0);
+							});
+						});
+						
+						menu._onLinkClick(e);
+					};
 				}
 				
 				// Remember the onclick event in the link-element
@@ -337,12 +294,12 @@ ScalePerformanceBarClass.prototype = {
 		// Show the menu bar
 		show: function() {
 			this.bar.style.top = "0px";
-			this.superClass.pageContent.style.top = "30px";
+			this.superClass.pageContent.style.top = this.bar.offsetHeight + "px";
 		},
 		
 		// Hide the menu bar
 		hide: function() {
-			this.bar.style.top = "-40px";
+			this.bar.style.top = (-this.bar.offsetHeight - 10) + "px";
 			this.superClass.pageContent.style.top = "0px";
 		},
 		
@@ -373,7 +330,7 @@ ScalePerformanceBarClass.prototype = {
 			
 			// Load specified script
 			var jselem = document.createElement("script");
-			jselem.id = "PerfScript" + script.index;
+			jselem.id = "PerfScript";
 			jselem.type = "text/javascript";
 			
 			// Decide whether to load local or public script
@@ -386,10 +343,21 @@ ScalePerformanceBarClass.prototype = {
 				jselem.src = script.href;
 			}
 			
+			if(script.onload != null)
+			{
+				jselem.onload = function() {
+					script.onload(superClass);
+					
+					if(tools.activeTool.onload != null) tools.activeTool.onload();
+					
+					tools.executeOnActiveToolLoaded();
+				}
+			}
+			
 			document.getElementsByTagName("body")[0].appendChild(jselem);
 			
 			// Add method to remove script after closing tool
-			superClass.tools.onCloseTool(function() {
+			superClass.tools.oncloseTool(function() {
 				jselem.parentNode.removeChild(jselem);
 			});
 			
@@ -399,7 +367,7 @@ ScalePerformanceBarClass.prototype = {
 	
 	tools: {
 		superClass:		null,
-		_onCloseTool:	[],
+		_oncloseTool:	[],
 		bar:			null,
 		
 		addBar: function() {
@@ -424,11 +392,8 @@ ScalePerformanceBarClass.prototype = {
 				toolBarActiveBackButton.href = "javascript:;";
 				toolBarActiveBackButton.innerHTML = "< ";
 				toolBarActiveBackButton.onclick = function() {
-					// Show menu bar
-					superClass.menu.show();
-					
 					// Trigger close of tool-active bar
-					close.onclick();
+					close.onclick(true);
 				};
 				tools.bar.appendChild(toolBarActiveBackButton);
 				
@@ -446,12 +411,31 @@ ScalePerformanceBarClass.prototype = {
 				var close = document.createElement("a");
 				close.href = "javascript:;";
 				close.innerHTML = "X";
-				close.onclick = function() {
+				close.onclick = function(isBackButton) {
 					tools.hide();
 					
-					superClass.tools.executeOnCloseTool();
+					// if back button was triggered originally
+					if(isBackButton === true)
+					{
+						// Show menu bar
+						superClass.menu.show();
+					}
+					else
+					{
+						// Set page content back to normal position
+						superClass.pageContent.style.top = "0px";
+					}
 					
-					//superClass.helpers.avoidPageOverlapWithBar();
+					var elem = document.getElementById(tools.activeTool.containerId);
+					elem.style.top = -elem.offsetHeight + "px";
+					
+					window.setTimeout(function() {
+						// Remove the tool script
+						var scriptElem = document.getElementById("PerfScript");
+						scriptElem.parentNode.removeChild(scriptElem);
+						
+						if(tools.activeTool.onclose != null) tools.activeTool.onclose();
+					}, 500);
 				};
 				symbolsBlock.appendChild(close);
 			}
@@ -463,25 +447,37 @@ ScalePerformanceBarClass.prototype = {
 			
 			this.bar.style.top = "0px";
 			
-			var h1 = (superClass.menu.bar != null ? superClass.menu.bar.offsetHeight : 0);
-			var h2 = (superClass.tools.bar != null ? superClass.tools.bar.offsetHeight : 0);
-			
-			this.superClass.pageContent.style.top = Math.max(h1, h2) + "px";
+			superClass.pageContent.style.top = superClass.tools.bar.offsetHeight + "px";
 		},
 		
 		// Hide the tools bar
 		hide: function() {
-			this.bar.style.top = "-40px";
+			var superClass = this.superClass;
+			
+			this.bar.style.top = (-this.bar.offsetHeight - 10) + "px";
 		},
 		
-		onCloseTool: function(func) {
-			this._onCloseTool.push(func);
+		oncloseTool: function(func) {
+			this._oncloseTool.push(func);
 		},
 		
-		executeOnCloseTool: function(func) {
-			while(this._onCloseTool.length > 0)
+		executeoncloseTool: function(func) {
+			while(this._oncloseTool.length > 0)
 			{
-				var func = this._onCloseTool.pop();
+				var func = this._oncloseTool.pop();
+				func();
+			}
+		},
+		
+		_onActiveToolLoaded: [],
+		onActiveToolLoaded: function(func) {
+			this._onActiveToolLoaded.push(func);
+		},
+		
+		executeOnActiveToolLoaded: function(func) {
+			while(this._onActiveToolLoaded.length > 0)
+			{
+				var func = this._onActiveToolLoaded.pop();
 				func();
 			}
 		}
@@ -526,7 +522,7 @@ ScalePerformanceBarClass.prototype = {
 			}, 0);
 		},
 		
-		waitForExist: function(elemId, callback) {
+		waitForElementExist: function(elemId, callback) {
 			var interval = window.setInterval(function() {
 				var element = document.getElementById(elemId);
 				
