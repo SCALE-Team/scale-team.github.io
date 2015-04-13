@@ -166,7 +166,7 @@ Waterfall.prototype = {
 		//style += "#" + this.containerId + " .svg_labels text { background:red; }";
 		
 		style += "#" + this.containerId + " .button-group { display: inline-block; }";
-		style += "#" + this.containerId + " .button-group button { border-radius: 0px 0px 0px 0px; border-right: none; }";
+		style += "#" + this.containerId + " .button-group button { border-radius: 0px 0px 0px 0px; border-right: none; cursor: pointer; }";
 		style += "#" + this.containerId + " .button-group button:hover { background-color: #eee; }";
 		style += "#" + this.containerId + " .button-group button:active { background-color: #ccc; }";
 		style += "#" + this.containerId + " .button-group button[disabled] { background-color: #ccc !important; }";
