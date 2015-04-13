@@ -73,7 +73,6 @@ var Stats = function () {
 	fpsDiv.appendChild( fpsText );
 	
 	fpsDiv.style.height = (fpsText.offsetHeight + height + padding) + "px";
-	console.log(fpsDiv.style.height);
 	
 	var fpsGraph = document.createElement( 'div' );
 	fpsGraph.id = 'fpsGraph';
@@ -150,7 +149,7 @@ var Stats = function () {
 	msText.innerHTML = 'MS';
 	msDiv.appendChild( msText );
 	
-	msDiv.style.height = fpsText.offsetHeight + height + padding;
+	msDiv.style.height = (fpsText.offsetHeight + height + padding) + "px";
 
 	var msGraph = document.createElement( 'div' );
 	msGraph.id = 'msGraph';
