@@ -33,11 +33,13 @@ Waterfall.prototype = {
 	toolContainer:		null,
 	
 	/* SCALE performance tool IO functions */
-		containerId: 		"PerfWaterfallDiv",
-		isContainerFixed:	false,
+		containerId: 			"PerfWaterfallDiv",
+		shouldMovePageContent:	true,
 		onclose: function() {
 			var waterfall = document.getElementById(this.containerId);
 			if(waterfall != null) waterfall.parentNode.removeChild(waterfall);
+			
+			this.cssElem.parentNode.removeChild(this.cssElem);
 		},
 		
 	
@@ -56,8 +58,8 @@ Waterfall.prototype = {
 	addStyles: function() {
 		var head = document.head || document.getElementsByTagName('head')[0];
 
-		var cssElem = document.createElement("style");
-		cssElem.id = "PerfBookmarkletStyle";
+		this.cssElem = document.createElement("style");
+		this.cssElem.id = "ScaleWaterfallStyle";
 		var style = "#" + this.containerId + " { background: #fff; border-bottom: 2px solid #000; margin: 5px; position: absolute; visibility: hidden; left: 0px; z-index: 99999; margin: 0px; padding: 5px 0px 10px 0px; }";
 		style += "#" + this.containerId + " input, #" + this.containerId + " button { outline: none; border-radius: 5px; padding: 5px; border: 1px solid #ccc; }";
 		style += "#" + this.containerId + " button { background-color: #ddd; padding: 5px 10px; }";
@@ -78,6 +80,9 @@ Waterfall.prototype = {
 			style += "#" + this.containerId + " .filterContainer > div:last-child > :last-child { position: absolute; right: 0px; top: 0px; width: 240px; text-align: right; }";
 		style += "}";
 		
+		style += "#" + this.containerId + " #ChartContainer { position: relative; }";
+		style += "#" + this.containerId + " .chartSvg { position: absolute; top: 0px; left: 200px; right: 5px; }";
+		
 		style += "#" + this.containerId + " .button-group { display: inline-block; }";
 		style += "#" + this.containerId + " .button-group button { border-radius: 0px 0px 0px 0px; border-right: none; }";
 		style += "#" + this.containerId + " .button-group button:hover { background-color: #eee; }";
@@ -86,8 +91,8 @@ Waterfall.prototype = {
 		style += "#" + this.containerId + " .button-group :first-child { border-radius: 5px 0px 0px 5px; }";
 		style += "#" + this.containerId + " .button-group :last-child { border-radius: 0px 5px 5px 0px; border-right: 1px solid #ccc; }";
 
-		cssElem.innerHTML = style;
-		head.appendChild(cssElem);
+		this.cssElem.innerHTML = style;
+		head.appendChild(this.cssElem);
 	},
 	
 	/**
@@ -120,14 +125,14 @@ Waterfall.prototype = {
 			filterContainer.appendChild(rightContainer);
 			
 			var span = document.createElement("span");
-			span.innerHTML = "Show first ";
+			span.innerHTML = "Show until ";
 			var timeSpanInput = document.createElement("input");
 			timeSpanInput.id = "TimeSpanInput";
 			timeSpanInput.type = "number";
 			
 			timeSpanInput.timeout = null;
 			span.appendChild(timeSpanInput);
-			span.innerHTML += " ms";
+			span.innerHTML += " ms after page call";
 			leftContainer.appendChild(span);
 			
 			// Has to be appended with small delay. Element has to exist on screen
@@ -270,8 +275,13 @@ Waterfall.prototype = {
 	
 	// Function to draw all the waterfall bars
 	drawAllBars: function(entries) {
+		// Height of the bars
 		var rowHeight = 10;
+		
+		// space between the bars
 		var rowPadding = 2;
+		
+		// The width of the labels
 		var barOffset = 200;
 		
 		var entriesToShow = this.filterEntries(entries);
@@ -287,47 +297,60 @@ Waterfall.prototype = {
 		var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 		var height = (entriesToShow.length + 1) * (rowHeight + rowPadding); // +1 for axis
 		
-		width -= 25;
-		
 		this.toolContainer.style.width = "100%";
 		
 		this.chartContainer.style.width = "100%";
 		this.chartContainer.style.height = height;
 		
-		var svg = this.svg.createSVG(width, height);
+		var svgLabels = this.svg.createSVG(barOffset, height);
+		var svgChart = this.svg.createSVG("100%", height);
 		
-		// scale
+		// How many seconds per pixel
 		var scaleFactor = maxTime / (width - 5 - barOffset);
 		
 		// draw axis
-		var interval = 1000 / scaleFactor;
-		var numberOfLines = maxTime / interval;
-		var x1 = barOffset,
-			y1 = rowHeight + rowPadding,
-			y2 = height;
+			// space between the seconds on the x-axis
+			var interval = 1000 / scaleFactor;
+			
+			// number of seconds-lines to be shown
+			var numberOfLines = maxTime / interval;
+			
+			// coordinates for the seconds-lines
+			var x1 = 0,
+				y1 = rowHeight + rowPadding,
+				y2 = height;
 
-		for(var n = 0; n < numberOfLines; n++) {
-			svg.appendChild(this.svg.createSVGText(x1, 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
-			svg.appendChild(this.svg.createSVGLine(x1, y1, x1, y2, "stroke: #ccc;"));
-			x1 += interval;
-		} 
+			for(var n = 0; n < numberOfLines; n++) {
+				// If first number move a little bit to right to let teh first number not be hidden
+				var textX1 = (n==0 ? x1 + 3 : x1);
+				
+				svgChart.appendChild(this.svg.createSVGText(textX1, 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
+				svgChart.appendChild(this.svg.createSVGLine(x1, y1, x1, y2, "stroke: #ccc;"));
+				x1 += interval;
+			} 
 
 		// draw resource entries
 		for(var n = 0; n < entriesToShow.length; n++) {
 
 			var entry = entriesToShow[n]; 
 
-			var row = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
+			var rowLabel = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
+			rowLabel.appendChild(this.svg.createSVGText(5, 0, 0, rowHeight, "font: 10px sans-serif;", "start", this.shortenURL(entry.url), entry.url));
+			svgLabels.appendChild(rowLabel);
 
-			row.appendChild(this.svg.createSVGText(5, 0, 0, rowHeight, "font: 10px sans-serif;", "start", this.shortenURL(entry.url), entry.url));
+			var rowChart = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
+			rowChart.appendChild(this.drawBar(entry, 0, rowHeight, scaleFactor, maxTime));
+			svgChart.appendChild(rowChart);
 
-			row.appendChild(this.drawBar(entry, barOffset, rowHeight, scaleFactor));
-
-			svg.appendChild(row);
 			// console.log(JSON.stringify(entry) + "\n" );
 		}
-
-		this.chartContainer.appendChild(svg);
+		
+		var div = document.createElement("div");
+		div.className = "chartSvg";
+		div.appendChild(svgChart);
+		
+		this.chartContainer.appendChild(svgLabels);
+		this.chartContainer.appendChild(div);
 	},
 	
 	/**
@@ -338,37 +361,52 @@ Waterfall.prototype = {
 	 * @param {double} scaleFactor Factor used to scale down chart elements
 	 * @returns {element} SVG Group element containing bar
 	 */
-	drawBar: function(entry, barOffset, rowHeight, scaleFactor) {
-		var bar = this.svg.createSVGGroup("translate(" + barOffset + ", 0)");
-
-		bar.appendChild(this.svg.createSVGRect(entry.start / scaleFactor, 0, entry.duration / scaleFactor, rowHeight, "fill:" + this.barColors.blocked));
+	drawBar: function(entry, barOffset, rowHeight, scaleFactor, maxTime) {
+		//var bar = this.svg.createSVGGroup("translate(" + barOffset + ", 0)");
+		var bar = this.svg.createSVGGroup();
+		
+		// Calculates the percentage relation of part to max
+		var isWidth = false;
+		function toP(part, max) {
+			//return part/scaleFactor;
+			
+			var p = Math.round(part / max * 10000) / 100.0;
+			isWidth = !isWidth;
+			
+			return p + "%";
+		}
+		
+		//function createSVGRect(x, y, width, height, style)
+		bar.appendChild(this.svg.createSVGRect(toP(entry.start, maxTime), 0, toP(entry.duration, maxTime), rowHeight, "fill:" + this.barColors.blocked));
+		
+		//bar.appendChild(this.svg.createSVGRect("10%", 10, "40%", rowHeight, "fill:" + this.barColors.blocked));
 		
 		if(entry.redirectDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(entry.redirectStart / scaleFactor , 0, entry.redirectDuration / scaleFactor, rowHeight, "fill:" + this.barColors.redirect));
+			bar.appendChild(this.svg.createSVGRect(toP(entry.redirectStart, maxTime), 0, toP(entry.redirectDuration, maxTime), rowHeight, "fill:" + this.barColors.redirect));
 		}
 
 		if(entry.appCacheDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(entry.appCacheStart / scaleFactor , 0, entry.appCacheDuration / scaleFactor, rowHeight, "fill:" + this.barColors.appCache));
+			bar.appendChild(this.svg.createSVGRect(toP(entry.appCacheStart, maxTime), 0, toP(entry.appCacheDuration, maxTime) , rowHeight, "fill:" + this.barColors.appCache));
 		}
 
 		if(entry.dnsDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(entry.dnsStart / scaleFactor , 0, entry.dnsDuration / scaleFactor, rowHeight, "fill:" + this.barColors.dns));
+			bar.appendChild(this.svg.createSVGRect(toP(entry.dnsStart, maxTime) , 0, toP(entry.dnsDuration, maxTime), rowHeight, "fill:" + this.barColors.dns));
 		}
 
 		if(entry.tcpDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(entry.tcpStart / scaleFactor , 0, entry.tcpDuration / scaleFactor, rowHeight, "fill:" + this.barColors.tcp));
+			bar.appendChild(this.svg.createSVGRect(toP(entry.tcpStart, maxTime) , 0, toP(entry.tcpDuration, maxTime), rowHeight, "fill:" + this.barColors.tcp));
 		}
 
 		if(entry.sslDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(entry.sslStart / scaleFactor , 0, entry.sslDuration / scaleFactor, rowHeight, "fill:" + this.barColors.ssl));
+			bar.appendChild(this.svg.createSVGRect(toP(entry.sslStart, maxTime) , 0, toP(entry.sslDuration, maxTime), rowHeight, "fill:" + this.barColors.ssl));
 		}
 
 		if(entry.requestDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(entry.requestStart / scaleFactor , 0, entry.requestDuration / scaleFactor, rowHeight, "fill:" + this.barColors.request));
+			bar.appendChild(this.svg.createSVGRect(toP(entry.requestStart, maxTime) , 0, toP(entry.requestDuration, maxTime), rowHeight, "fill:" + this.barColors.request));
 		}
 
 		if(entry.responseDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(entry.responseStart / scaleFactor , 0, entry.responseDuration / scaleFactor, rowHeight, "fill:" + this.barColors.response));
+			bar.appendChild(this.svg.createSVGRect(toP(entry.responseStart, maxTime) , 0, toP(entry.responseDuration, maxTime), rowHeight, "fill:" + this.barColors.response));
 		}
 
 		return bar;
@@ -545,8 +583,11 @@ Waterfall.prototype = {
 		 */
 		createSVGGroup: function(transform) {		
 			var el = document.createElementNS(this.xmlns, "g");
-	 
-			el.setAttribute("transform", transform);
+			
+			if(transform != null)
+			{
+				el.setAttribute("transform", transform);
+			}
 		
 			return el;
 		},

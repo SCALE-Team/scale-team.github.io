@@ -3,8 +3,8 @@ var DomMonster = function() {
 		styleElem: null,
 		
 		/* SCALE performance tool IO functions */
-			containerId:		"jr_results",
-			isContainerFixed:	false,
+			containerId:			"jr_results",
+			shouldMovePageContent:	true,
 			onload: function() {
 				this.jrResults = document.getElementById("jr_results");
 				
@@ -12,6 +12,8 @@ var DomMonster = function() {
 				this.styleElem = document.createElement("style");
 				this.styleElem.id = "DomMonsterStyle";
 				this.styleElem.innerHTML = "";
+				this.styleElem.innerHTML += "#jr_results { position: absolute !important; }";
+				this.styleElem.innerHTML += "#jr_results_tips { overflow: visible !important; max-height: none !important; }";
 				this.styleElem.innerHTML += "#jr_stats { float: none !important; width: 100% !important; }";
 				this.styleElem.innerHTML += "#jr_stats > div { display: inline-block !important; width: 210px !important; }";
 				this.styleElem.innerHTML += "#jr_stats > div > div:first-child { width: 20px !important; height: 20px !important; margin-right: 5px !important; }";
@@ -96,7 +98,7 @@ var DomMonster = function() {
     };
     JR.flush = function(string) {
         var results = $('jr_results_tips'),
-            html = '<div style="' + JR.reset + ';Xmargin-left:230px;padding-top:4px">';
+            html = '<div style="' + JR.reset + ';padding-top:4px">';
 
         function flushArray(array) {
             for (var i = 0; i < array.length; i++)
