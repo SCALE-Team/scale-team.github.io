@@ -324,8 +324,8 @@ Waterfall.prototype = {
 				// If first number move a little bit to right to let teh first number not be hidden
 				var textX1 = (n==0 ? x1 + 3 : x1);
 				
-				svgChart.appendChild(this.svg.createSVGText(textX1, 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
-				svgChart.appendChild(this.svg.createSVGLine(x1, y1, x1, y2, "stroke: #ccc;"));
+				svgChart.appendChild(this.svg.createSVGText(toPercentage(textX1, maxTime), 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
+				svgChart.appendChild(this.svg.createSVGLine(toPercentage(x1, maxTime), y1, x1, y2, "stroke: #ccc;"));
 				x1 += interval;
 			} 
 
@@ -353,6 +353,15 @@ Waterfall.prototype = {
 		this.chartContainer.appendChild(div);
 	},
 	
+	// Calculates the percentage relation of part to max
+	toPercentage: function(part, max) {
+		//return part/scaleFactor;
+		
+		var p = Math.round(part / max * 10000) / 100.0;
+		
+		return p + "%";
+	}
+	
 	/**
 	 * Draw bar for resource 
 	 * @param {object} entry Details of URL, and timings for individual resource
@@ -365,48 +374,37 @@ Waterfall.prototype = {
 		//var bar = this.svg.createSVGGroup("translate(" + barOffset + ", 0)");
 		var bar = this.svg.createSVGGroup();
 		
-		// Calculates the percentage relation of part to max
-		var isWidth = false;
-		function toP(part, max) {
-			//return part/scaleFactor;
-			
-			var p = Math.round(part / max * 10000) / 100.0;
-			isWidth = !isWidth;
-			
-			return p + "%";
-		}
-		
 		//function createSVGRect(x, y, width, height, style)
-		bar.appendChild(this.svg.createSVGRect(toP(entry.start, maxTime), 0, toP(entry.duration, maxTime), rowHeight, "fill:" + this.barColors.blocked));
+		bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.start, maxTime), 0, this.toPercentage(entry.duration, maxTime), rowHeight, "fill:" + this.barColors.blocked));
 		
 		//bar.appendChild(this.svg.createSVGRect("10%", 10, "40%", rowHeight, "fill:" + this.barColors.blocked));
 		
 		if(entry.redirectDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(toP(entry.redirectStart, maxTime), 0, toP(entry.redirectDuration, maxTime), rowHeight, "fill:" + this.barColors.redirect));
+			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.redirectStart, maxTime), 0, this.toPercentage(entry.redirectDuration, maxTime), rowHeight, "fill:" + this.barColors.redirect));
 		}
 
 		if(entry.appCacheDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(toP(entry.appCacheStart, maxTime), 0, toP(entry.appCacheDuration, maxTime) , rowHeight, "fill:" + this.barColors.appCache));
+			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.appCacheStart, maxTime), 0, this.toPercentage(entry.appCacheDuration, maxTime) , rowHeight, "fill:" + this.barColors.appCache));
 		}
 
 		if(entry.dnsDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(toP(entry.dnsStart, maxTime) , 0, toP(entry.dnsDuration, maxTime), rowHeight, "fill:" + this.barColors.dns));
+			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.dnsStart, maxTime) , 0, this.toPercentage(entry.dnsDuration, maxTime), rowHeight, "fill:" + this.barColors.dns));
 		}
 
 		if(entry.tcpDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(toP(entry.tcpStart, maxTime) , 0, toP(entry.tcpDuration, maxTime), rowHeight, "fill:" + this.barColors.tcp));
+			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.tcpStart, maxTime) , 0, this.toPercentage(entry.tcpDuration, maxTime), rowHeight, "fill:" + this.barColors.tcp));
 		}
 
 		if(entry.sslDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(toP(entry.sslStart, maxTime) , 0, toP(entry.sslDuration, maxTime), rowHeight, "fill:" + this.barColors.ssl));
+			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.sslStart, maxTime) , 0, this.toPercentage(entry.sslDuration, maxTime), rowHeight, "fill:" + this.barColors.ssl));
 		}
 
 		if(entry.requestDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(toP(entry.requestStart, maxTime) , 0, toP(entry.requestDuration, maxTime), rowHeight, "fill:" + this.barColors.request));
+			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.requestStart, maxTime) , 0, this.toPercentage(entry.requestDuration, maxTime), rowHeight, "fill:" + this.barColors.request));
 		}
 
 		if(entry.responseDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(toP(entry.responseStart, maxTime) , 0, toP(entry.responseDuration, maxTime), rowHeight, "fill:" + this.barColors.response));
+			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.responseStart, maxTime) , 0, this.toPercentage(entry.responseDuration, maxTime), rowHeight, "fill:" + this.barColors.response));
 		}
 
 		return bar;
