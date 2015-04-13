@@ -324,11 +324,10 @@ Waterfall.prototype = {
 
 			for(var n = 0; n < numberOfLines; n++) {
 				// If first number move a little bit to right to let teh first number not be hidden
-				var textX1 = (n==0 ? x1_percentage + 3 : this.toPercentage(x1_percentage, maxTime));
-				var chartX1 = this.toPercentage(x1_percentage, maxTime);
+				var textX1 = (n==0 ? x1_percentage + 3 : x1_percentage);
 				
 				svgChart.appendChild(this.svg.createSVGText(textX1, 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
-				svgChart.appendChild(this.svg.createSVGLine(chartX1, y1, chartX1, y2, "stroke: #ccc;"));
+				svgChart.appendChild(this.svg.createSVGLine(x1_percentage, y1, x1_percentage, y2, "stroke: #ccc;"));
 				x1_percentage += interval;
 			} 
 
