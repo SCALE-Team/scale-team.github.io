@@ -418,7 +418,7 @@ var DomMonster = function() {
         while (i--) {
             var opacity = JR.getStyle(nodes[i], 'opacity') || 1;
             if (opacity < 1) {
-                nodes[i].style.className += ' dommonster_dashed_blue';
+                nodes[i].className += ' dommonster_dashed_blue';
                 op.push(nodes[i]);
                 if (JR._console) console.info('Transparent node', nodes[i]);
             }
@@ -632,7 +632,7 @@ var DomMonster = function() {
             average += parentNodes(nodes[i]);
             if (parentNodes(nodes[i]) > 15) {
                 very = true;
-                nodes[i].style.className += ' dommonster_dashed_red';
+                nodes[i].className += ' dommonster_dashed_red';
             }
         }
         average = average / nodes.length;
