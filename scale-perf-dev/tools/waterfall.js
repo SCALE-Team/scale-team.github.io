@@ -311,23 +311,25 @@ Waterfall.prototype = {
 		// draw axis
 			// space between the seconds on the x-axis
 			var interval = 1000 / scaleFactor;
+			// %-space between the seconds on the x-axis
+			interval = 100000 / maxTime; // original: 1 / (maxTime / 1000) * 100
 			
 			// number of seconds-lines to be shown
 			var numberOfLines = maxTime / interval;
 			
 			// coordinates for the seconds-lines
-			var x1 = 0,
+			var x1_percentage = 0,
 				y1 = rowHeight + rowPadding,
 				y2 = height;
 
 			for(var n = 0; n < numberOfLines; n++) {
 				// If first number move a little bit to right to let teh first number not be hidden
-				var textX1 = (n==0 ? x1 + 3 : this.toPercentage(x1, maxTime));
-				var chartX1 = this.toPercentage(x1, maxTime);
+				var textX1 = (n==0 ? x1_percentage + 3 : this.toPercentage(x1_percentage, maxTime));
+				var chartX1 = this.toPercentage(x1_percentage, maxTime);
 				
 				svgChart.appendChild(this.svg.createSVGText(textX1, 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
 				svgChart.appendChild(this.svg.createSVGLine(chartX1, y1, chartX1, y2, "stroke: #ccc;"));
-				x1 += interval;
+				x1_percentage += interval;
 			} 
 
 		// draw resource entries
@@ -340,7 +342,7 @@ Waterfall.prototype = {
 			svgLabels.appendChild(rowLabel);
 
 			var rowChart = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
-			rowChart.appendChild(this.drawBar(entry, 0, rowHeight, scaleFactor, maxTime));
+			rowChart.appendChild(this.drawBar(entry, 0, rowHeight, maxTime));
 			svgChart.appendChild(rowChart);
 
 			// console.log(JSON.stringify(entry) + "\n" );
@@ -371,7 +373,7 @@ Waterfall.prototype = {
 	 * @param {double} scaleFactor Factor used to scale down chart elements
 	 * @returns {element} SVG Group element containing bar
 	 */
-	drawBar: function(entry, barOffset, rowHeight, scaleFactor, maxTime) {
+	drawBar: function(entry, barOffset, rowHeight, maxTime) {
 		//var bar = this.svg.createSVGGroup("translate(" + barOffset + ", 0)");
 		var bar = this.svg.createSVGGroup();
 		
