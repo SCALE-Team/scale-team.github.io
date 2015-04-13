@@ -322,10 +322,10 @@ Waterfall.prototype = {
 
 			for(var n = 0; n < numberOfLines; n++) {
 				// If first number move a little bit to right to let teh first number not be hidden
-				var textX1 = (n==0 ? x1 + 3 : x1);
+				var textX1 = (n==0 ? x1 + 3 : this.toPercentage(textX1, maxTime));
 				
-				svgChart.appendChild(this.svg.createSVGText(toPercentage(textX1, maxTime), 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
-				svgChart.appendChild(this.svg.createSVGLine(toPercentage(x1, maxTime), y1, x1, y2, "stroke: #ccc;"));
+				svgChart.appendChild(this.svg.createSVGText(textX1, 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
+				svgChart.appendChild(this.svg.createSVGLine(this.toPercentage(x1, maxTime), y1, x1, y2, "stroke: #ccc;"));
 				x1 += interval;
 			} 
 
@@ -360,7 +360,7 @@ Waterfall.prototype = {
 		var p = Math.round(part / max * 10000) / 100.0;
 		
 		return p + "%";
-	}
+	},
 	
 	/**
 	 * Draw bar for resource 
