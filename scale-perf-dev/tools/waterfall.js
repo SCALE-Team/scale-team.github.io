@@ -315,7 +315,7 @@ Waterfall.prototype = {
 			interval = 100000 / maxTime; // original: 1 / (maxTime / 1000) * 100
 			
 			// number of seconds-lines to be shown
-			var numberOfLines = maxTime / interval;
+			var numberOfLines = Math.ceil(maxTime / 1000);
 			
 			// coordinates for the seconds-lines
 			var x1_percentage = 0,
