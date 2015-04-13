@@ -72,7 +72,7 @@ var Stats = function () {
 	fpsText.innerHTML = 'FPS';
 	fpsDiv.appendChild( fpsText );
 	
-	fpsDiv.style.height = (fpsText.offsetHeight + height + padding) + px;
+	fpsDiv.style.height = (fpsText.offsetHeight + height + padding) + "px";
 	console.log(fpsDiv.style.height);
 	
 	var fpsGraph = document.createElement( 'div' );
