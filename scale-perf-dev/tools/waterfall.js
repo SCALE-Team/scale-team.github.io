@@ -305,14 +305,9 @@ Waterfall.prototype = {
 		var svgLabels = this.svg.createSVG(barOffset, height);
 		var svgChart = this.svg.createSVG("100%", height);
 		
-		// How many seconds per pixel
-		var scaleFactor = maxTime / (width - 5 - barOffset);
-		
 		// draw axis
-			// space between the seconds on the x-axis
-			var interval = 1000 / scaleFactor;
 			// %-space between the seconds on the x-axis
-			interval = 100000 / maxTime; // original: 1 / (maxTime / 1000) * 100
+			var interval = 100000 / maxTime; // original: 1 / (maxTime / 1000) * 100
 			
 			// number of seconds-lines to be shown
 			var numberOfLines = Math.ceil(maxTime / 1000);
@@ -357,8 +352,6 @@ Waterfall.prototype = {
 	
 	// Calculates the percentage relation of part to max
 	toPercentage: function(part, max) {
-		//return part/scaleFactor;
-		
 		var p = Math.round(part / max * 10000) / 100.0;
 		
 		return p + "%";
@@ -369,8 +362,7 @@ Waterfall.prototype = {
 	 * @param {object} entry Details of URL, and timings for individual resource
 	 * @param {int} barOffset Offset of the start of the bar along  x axis
 	 * @param {int} rowHeight 
-	 * @param {double} scaleFactor Factor used to scale down chart elements
-	 * @returns {element} SVG Group element containing bar
+	 * @param {double} the latest point of time of all bars
 	 */
 	drawBar: function(entry, barOffset, rowHeight, maxTime) {
 		//var bar = this.svg.createSVGGroup("translate(" + barOffset + ", 0)");
