@@ -322,7 +322,7 @@ Waterfall.prototype = {
 
 			for(var n = 0; n < numberOfLines; n++) {
 				// If first number move a little bit to right to let teh first number not be hidden
-				var textX1 = (n==0 ? x1 + 3 : this.toPercentage(textX1, maxTime));
+				var textX1 = (n==0 ? x1 + 3 : this.toPercentage(x1, maxTime));
 				var chartX1 = this.toPercentage(x1, maxTime);
 				
 				svgChart.appendChild(this.svg.createSVGText(textX1, 0, 0, rowHeight, "font: 10px sans-serif;", "middle", n));
