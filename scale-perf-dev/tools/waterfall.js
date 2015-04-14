@@ -457,8 +457,8 @@ Waterfall.prototype = {
 				
 				if(maxTime < 1000) var text = Math.round(n * intervalSize) + "ms";
 				else if(maxTime < 10000) var text = (Math.round(n * intervalSize / 100) / 10.0) + "s";
-				else if(maxTime < 10000) var text = Math.round(n * intervalSize / 1000) + "s";
-				else if(maxTime < 100000) var text = Math.round(n * intervalSize / 10000) * 10 + "s";
+				else if(maxTime < 100000) var text = Math.round(n * intervalSize / 1000) + "s";
+				else var text = Math.round(n * intervalSize / 10000) * 10 + "s";
 				
 				svgChart.appendChild(this.svg.createSVGText(x1_percentage + "%", 0, 0, rowHeight, "font: 10px sans-serif;", anchor, text));
 				svgChart.appendChild(this.svg.createSVGLine(x1_percentage + "%", y1, x1_percentage + "%", y2, "stroke: #ccc;"));
