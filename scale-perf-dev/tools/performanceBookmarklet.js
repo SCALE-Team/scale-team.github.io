@@ -1403,7 +1403,7 @@ onIFrameLoaded(function(helper, dom, svgs){
 		resourceSectionSegment("domContentLoaded Event", calc.domContentLoadedEventStart, calc.domContentLoadedEventEnd, "#d888df"),
 		resourceSectionSegment("onload Event", calc.loadEventStart, calc.loadEventEnd, "#c0c0ff")
 	];
-	
+
 	if(calc.secureConnectionStart){
 		navigationApiTotal.push(resourceSectionSegment("SSL", calc.connectStart, calc.secureConnectionStart, "#c141cd"));
 	}
