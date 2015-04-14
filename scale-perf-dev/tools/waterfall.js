@@ -453,13 +453,25 @@ Waterfall.prototype = {
 			}
 			
 			/* The chart */ {
-				var lastTime = (entry.start + entry.duration);
-				var distToRightBorder = (lastTime - maxTime) / maxTime * 260;	// 260px is the width of the chart on mobile device
-				var dx = ((distToRightBorder < -30) ? 5 : -30) + "px";
+				var latestTime = (entry.start + entry.duration);
 				
-				var positionX = this.toPercentage(lastTime, maxTime);
+				// Check if the distance to the right border is big enough to fit the text
+				var distToRightBorder = (maxTime - latestTime) / maxTime * 260;	// 260px is the width of the chart on mobile device
+				if(distToRightBorder > 30)
+				{
+					var dx = "5px";
+					var anchor = "start";
+				}
+				else
+				{
+					var dx = "-5px";
+					var anchor = "end";
+				}
+				console.log(distToRightBorder);
 				
-				rowChart.appendChild(this.svg.createSVGText(positionX, 0, dx, dy, "font: 10px sans-serif;", "start", Math.round(entry.duration) + "ms", ""));
+				var positionX = this.toPercentage(latestTime, maxTime);
+				
+				rowChart.appendChild(this.svg.createSVGText(positionX, 0, dx, dy, "font: 10px sans-serif;", anchor, Math.round(entry.duration) + "ms", ""));
 			}
 			
 		}
