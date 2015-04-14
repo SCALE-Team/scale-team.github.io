@@ -169,7 +169,7 @@ Waterfall.prototype = {
 		style += "#" + this.containerId + " .button-group button { border-radius: 0px 0px 0px 0px; border-right: none; cursor: pointer; }";
 		style += "#" + this.containerId + " .button-group button:hover { background-color: #eee; }";
 		style += "#" + this.containerId + " .button-group button:active { background-color: #ccc; }";
-		style += "#" + this.containerId + " .button-group button[disabled] { background-color: #ccc !important; }";
+		style += "#" + this.containerId + " .button-group button[disabled] { background-color: #ccc !important; cursor: default; }";
 		style += "#" + this.containerId + " .button-group :first-child { border-radius: 5px 0px 0px 5px; }";
 		style += "#" + this.containerId + " .button-group :last-child { border-radius: 0px 5px 5px 0px; border-right: 1px solid #ccc; }";
 		
@@ -384,7 +384,7 @@ Waterfall.prototype = {
 	// Function to draw all the waterfall bars
 	drawAllBars: function(entries) {
 		// Height of the bars
-		var rowHeight = 10;
+		var rowHeight = 20;
 		
 		// space between the bars
 		var rowPadding = 2;
@@ -437,14 +437,31 @@ Waterfall.prototype = {
 		// draw resource entries
 		for(var n = 0; n < entriesToShow.length; n++) {
 			var entry = entriesToShow[n]; 
+			
+			var dy = 13;
+			
+			/* Label of the row */ {
+				var rowLabel = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
+				rowLabel.appendChild(this.svg.createSVGText(5, 0, 0, dy, "font: 10px sans-serif;", "start", this.shortenURL(entry.url), entry.url));
+				svgLabels.appendChild(rowLabel);
+			}
 
-			var rowLabel = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
-			rowLabel.appendChild(this.svg.createSVGText(5, 0, 0, rowHeight, "font: 10px sans-serif;", "start", this.shortenURL(entry.url), entry.url));
-			svgLabels.appendChild(rowLabel);
-
-			var rowChart = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
-			rowChart.appendChild(this.drawBar(entry, 0, rowHeight, maxTime));
-			svgChart.appendChild(rowChart);
+			/* The chart */ {
+				var rowChart = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
+				rowChart.appendChild(this.drawBar(entry, 0, rowHeight, maxTime));
+				svgChart.appendChild(rowChart);
+			}
+			
+			/* The chart */ {
+				var lastTime = (entry.start + entry.duration);
+				var distToRightBorder = (lastTime - maxTime) / maxTime * 260;	// 260px is the width of the chart on mobile device
+				var dx = ((distToRightBorder < -30) ? 5 : -30) + "px";
+				
+				var positionX = this.toPercentage(lastTime, maxTime);
+				
+				rowChart.appendChild(this.svg.createSVGText(positionX, 0, dx, dy, "font: 10px sans-serif;", "start", Math.round(entry.duration) + "ms", ""));
+			}
+			
 		}
 		
 		var div = document.createElement("div");
