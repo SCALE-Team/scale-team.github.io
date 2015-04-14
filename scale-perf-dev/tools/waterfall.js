@@ -236,7 +236,7 @@ Waterfall.prototype = {
 			// Has to be appended with small delay. Element has to exist on screen
 			window.setTimeout(function(){
 				var timeSpanUntilInput = document.getElementById("timeSpanUntilInput");
-				timeSpanUntilInput.value = superClass.getPageLoadTime(entries);
+				timeSpanUntilInput.value = superClass.chartContainer.data.timeSpanUntil;
 				
 				var timeSpanFromInput = document.getElementById("timeSpanFromInput");
 				timeSpanFromInput.value = 0;
@@ -376,7 +376,7 @@ Waterfall.prototype = {
 			allowed:		[],
 			nowAllowed:		[],
 			searchText:		"",
-			timeSpan:		superClass.getPageLoadTime(entries)
+			timeSpanUntil:	superClass.getPageLoadTime(entries)
 		};
 		superClass.toolContainer.appendChild(superClass.chartContainer);
 		
@@ -435,9 +435,6 @@ Waterfall.prototype = {
 				if(numberOfLines > 10) intervalSize = Math.round(intervalSize * 1.2);
 				else if(numberOfLines < 7) intervalSize = Math.round(intervalSize / 1.2);
 				else break;
-				
-				console.log("intervalSize", intervalSize);
-				console.log("numberOfLines", numberOfLines);
 				
 				if(securityBreak-- < 0) break;
 			}
