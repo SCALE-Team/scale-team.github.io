@@ -419,20 +419,6 @@ Waterfall.prototype = {
 			var minTime = this.chartContainer.data.timeSpanFrom || 0;
 			var maxTime = this.chartContainer.data.timeSpanUntil || 0;
 			var timeSpan = maxTime - minTime;
-			/*
-			for(var n = 0; n < entriesToShow.length; n++)
-			{
-				maxTime = Math.max(maxTime, entriesToShow[n].start + entriesToShow[n].duration);
-			}
-			//*/
-			
-			var mainEvents = this.getMainPageEvents();
-			for(var f in mainEvents)
-			{
-				if(mainEvents[f].time > this.chartContainer.data.timeSpanUntil) continue;
-				
-				maxTime = Math.max(maxTime, mainEvents[f].time);
-			}
 			
 			//calculate size of chart
 			// - max time
@@ -493,25 +479,40 @@ Waterfall.prototype = {
 		}
 			
 		// draw main page events
+			var mainEvents = this.getMainPageEvents();
 			for(var f in mainEvents)
 			{
 				var event = mainEvents[f];
 				
-				if(event.time > this.chartContainer.data.timeSpanUntil) continue;
-				if((event.time) < this.chartContainer.data.timeSpanFrom) continue;
+				//if(event.timeEnd > this.chartContainer.data.timeSpanUntil) continue;
+				//if((event.timeStart) < this.chartContainer.data.timeSpanFrom) continue;
 				
-				var x = this.toPercentage(event.time, maxTime);
-				
-				var r = event.time / maxTime;
+				var r = event.timeEnd / timeSpan;
 				if(r < 0.25) var anchor = "start";
 				else if(r > 0.75) var anchor = "end";
 				else var anchor = "middle";
 				
-				var line = this.svg.createSVGLine(x, y1, x, y2, "stroke: red;");
-				var text = this.svg.createSVGText(x, 0, 0, rowHeight, "font: 10px sans-serif;", anchor, event.name);
+				// time or timeStart line
+				var startX = this.toPercentage((event.timeStart||event.time) - minTime, timeSpan);
+				var lineStart = this.svg.createSVGLine(startX, y1, startX, y2, "stroke-width: 2px; stroke: " + event.line + ";");
+				var textStart = this.svg.createSVGText(startX, 0, 0, rowHeight, "font: 10px sans-serif;", anchor, event.name);
 				
-				svgChart.appendChild(text);
-				svgChart.appendChild(line);
+				if(event.timeEnd != null)
+				{
+					var endX = this.toPercentage(event.timeEnd - minTime, timeSpan);
+					var lineEnd = this.svg.createSVGLine(endX, y1, endX, y2, "stroke-width: 2px; stroke: " + event.line + ";");
+					var textEnd = this.svg.createSVGText(endX, 0, 0, rowHeight, "font: 10px sans-serif;", anchor, "");
+					
+					var rectX = this.toPercentage(event.timeEnd - event.timeStart, timeSpan);
+					var rectY2 = y2 - y1;
+					var rectEnd = this.svg.createSVGRect(startX, y1, rectX, rectY2, "fill: " + event.fill + ";");
+				}
+				
+				svgChart.appendChild(rectEnd);
+				svgChart.appendChild(lineStart);
+				svgChart.appendChild(textStart);
+				svgChart.appendChild(lineEnd);
+				svgChart.appendChild(textEnd);
 			}
 			
 		// draw resource entries
@@ -792,11 +793,26 @@ Waterfall.prototype = {
 	
 	getMainPageEvents: function() {
 		var timing = window.performance.timing;
-		
+		console.log(timing);
 		return [
 			{
-				name:	"domContentLoaded",
-				time:	(timing.domContentLoadedEventEnd - timing.navigationStart)
+				name:			"DOM Content loaded",
+				timeStart:		(timing.domContentLoadedEventStart - timing.navigationStart),
+				timeEnd:		(timing.domContentLoadedEventEnd - timing.navigationStart),
+				line:			"#c141cd",
+				fill:			"#D888DF"
+			},
+			{
+				name:			"On load",
+				timeStart:		(timing.loadEventStart - timing.navigationStart),
+				timeEnd:		(timing.loadEventEnd - timing.navigationStart),
+				line:			"#0000FF",
+				fill:			"#C0C0FF"
+			},
+			{
+				name:			"DOM interactive",
+				time:			(timing.domInteractive - timing.navigationStart),
+				line:			"#FF6A00"
 			},
 			/*
 			{
@@ -805,18 +821,6 @@ Waterfall.prototype = {
 			}
 			//*/
 		];
-	},
-	
-	getDomContentLoadedTime: function() {
-		var events = this.getMainPageEvents();
-		
-		for(var f in events)
-		{
-			if(events[f].name == "domContentLoaded")
-			{
-				return events[f].time;
-			}
-		}
 	},
 
 	/**
