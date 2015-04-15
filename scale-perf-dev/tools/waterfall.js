@@ -331,6 +331,8 @@ Waterfall.prototype = {
 					
 					superClass.chartContainer.data.allowed = (btn.data!=null ? btn.data.allowed : null);
 					superClass.chartContainer.data.notAllowed = (btn.data!=null ? btn.data.notAllowed : null);
+					superClass.chartContainer.data.allowedInitiatorType = (btn.data!=null ? btn.data.allowedInitiatorType : null);
+					superClass.chartContainer.data.notAllowedInitiatorType = (btn.data!=null ? btn.data.notAllowedInitiatorType : null);
 					
 					superClass.drawAllBars(entries);
 				};
@@ -346,25 +348,37 @@ Waterfall.prototype = {
 				
 				var jsBtn = document.createElement("button");
 				jsBtn.innerHTML = "JS";
-				jsBtn.data = { allowed: [ "js" ] };
+				jsBtn.data = {
+					allowed:				[ "js" ],
+					allowedInitiatorType:	[ "script" ]
+				};
 				jsBtn.onclick = filterByType;
 				buttonGroup.appendChild(jsBtn);
 				
 				var cssBtn = document.createElement("button");
 				cssBtn.innerHTML = "CSS";
-				cssBtn.data = { allowed: [ "css" ] };
+				cssBtn.data = {
+					allowed: 				[ "css" ],
+					allowedInitiatorType:	[ "link" ]
+				};
 				cssBtn.onclick = filterByType;
 				buttonGroup.appendChild(cssBtn);
 				
 				var imgBtn = document.createElement("button");
 				imgBtn.innerHTML = "Images";
-				imgBtn.data = { allowed: [ "png", "jpg", "jpeg", "gif", "bmp", "svg", "tif" ] };
+				imgBtn.data = {
+					allowed:				[ "png", "jpg", "jpeg", "gif", "bmp", "svg", "tif" ],
+					allowedInitiatorType:	[ "img", "css" ]
+				};
 				imgBtn.onclick = filterByType;
 				buttonGroup.appendChild(imgBtn);
 				
 				var elseBtn = document.createElement("button");
 				elseBtn.innerHTML = "Else";
-				elseBtn.data = { notAllowed: jsBtn.data.allowed.concat(cssBtn.data.allowed).concat(imgBtn.data.allowed) };
+				elseBtn.data = {
+					notAllowed:					jsBtn.data.allowed.concat(cssBtn.data.allowed).concat(imgBtn.data.allowed),
+					notAllowedInitiatorType:	jsBtn.data.allowedInitiatorType.concat(cssBtn.data.allowedInitiatorType).concat(imgBtn.data.allowedInitiatorType)
+				};
 				elseBtn.onclick = filterByType;
 				buttonGroup.appendChild(elseBtn);
 				
@@ -387,71 +401,82 @@ Waterfall.prototype = {
 	
 	// Function to draw all the waterfall bars
 	drawAllBars: function(entries) {
-		// Height of the bars
-		var rowHeight = 20;
-		
-		// space between the bars
-		var rowPadding = 2;
-		
-		// The width of the labels
-		var barOffset = 200;
-		
-		// Get the entries to show
-		var entriesToShow = this.filterEntries(entries);
-		
-		// Find the latest time
-		var maxTime = 0;
-		for(var n = 0; n < entriesToShow.length; n++)
-		{
-			maxTime = Math.max(maxTime, entriesToShow[n].start + entriesToShow[n].duration);
-		}
-		
-		var mainEvents = this.getMainPageEvents();
-		for(var f in mainEvents)
-		{
-			if(mainEvents[f].time > this.chartContainer.data.timeSpanUntil) continue;
+		/* Prepare some attributes */ {
+			// Height of the bars
+			var rowHeight = 20;
 			
-			maxTime = Math.max(maxTime, mainEvents[f].time);
+			// space between the bars
+			var rowPadding = 2;
+			
+			// The width of the labels
+			var barOffset = 200;
+			
+			// Get the entries to show
+			var entriesToShow = this.filterEntries(entries);
+			//var entriesToShow = entries;
+			
+			// Find the latest time
+			var minTime = this.chartContainer.data.timeSpanFrom || 0;
+			var maxTime = this.chartContainer.data.timeSpanUntil || 0;
+			var timeSpan = maxTime - minTime;
+			/*
+			for(var n = 0; n < entriesToShow.length; n++)
+			{
+				maxTime = Math.max(maxTime, entriesToShow[n].start + entriesToShow[n].duration);
+			}
+			//*/
+			
+			var mainEvents = this.getMainPageEvents();
+			for(var f in mainEvents)
+			{
+				if(mainEvents[f].time > this.chartContainer.data.timeSpanUntil) continue;
+				
+				maxTime = Math.max(maxTime, mainEvents[f].time);
+			}
+			
+			//calculate size of chart
+			// - max time
+			// - number of entries
+			var height = (entriesToShow.length + 1) * (rowHeight + rowPadding); // +1 for axis
+			
+			this.toolContainer.style.width = "100%";
+			
+			this.chartContainer.style.width = "100%";
+			this.chartContainer.style.height = height;
+			
+			var svgLabels = this.svg.createSVG(barOffset, height);
+			var svgChart = this.svg.createSVG("100%", height);
 		}
 		
-		//calculate size of chart
-		// - max time
-		// - number of entries
-		var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		var height = (entriesToShow.length + 1) * (rowHeight + rowPadding); // +1 for axis
-		
-		this.toolContainer.style.width = "100%";
-		
-		this.chartContainer.style.width = "100%";
-		this.chartContainer.style.height = height;
-		
-		var svgLabels = this.svg.createSVG(barOffset, height);
-		var svgChart = this.svg.createSVG("100%", height);
-		
-		// draw axis
+		// draw x-axis
+		if(maxTime != 0)
+		{
 			// Size of one interval in ms
 			var numberOfLines = 10;
-			var intervalSize = maxTime / (numberOfLines - 1);
+			var intervalSize = timeSpan / (numberOfLines - 1);
 			
 			// %-space between the seconds on the x-axis
-			var interval = (100 * intervalSize) / maxTime; // original: 1 / (maxTime / intervalSize) * 100
+			var interval = (100 * intervalSize) / timeSpan; // original: 1 / (maxTime / intervalSize) * 100
 			
 			// coordinates for the seconds-lines
 			var x1_percentage = 0,
 				y1 = rowHeight + rowPadding,
 				y2 = height;
 
-			for(var i = 0; i < numberOfLines; i++) {
-				// If first number move a little bit to right to let teh first number not be hidden
+			for(var i = 0; i < numberOfLines; i++)
+			{
+				// Determine the anchor for the line labels to be always visible
 				var anchor = "middle";
-				
 				if(i == 0) anchor = "start";
 				else if(i == (numberOfLines - 1)) anchor = "end";
 				
-				if(maxTime < 1000) var text = Math.round(i * intervalSize) + "ms";
-				else if(maxTime < 10000) var text = (Math.round(i * intervalSize / 100) / 10.0) + "s";
-				else if(maxTime < 100000) var text = Math.round(i * intervalSize / 1000) + "s";
-				else var text = Math.round(i * intervalSize / 10000) * 10 + "s";
+				// Determine the format of the time depending on the time span
+				var timeMs = minTime + i * intervalSize;
+				
+				if(maxTime < 1000) var text = Math.round(timeMs) + "ms";
+				else if(maxTime < 10000) var text = (Math.round(timeMs / 100) / 10.0) + "s";
+				else if(maxTime < 100000) var text = Math.round(timeMs / 1000) + "s";
+				else var text = Math.round(timeMs / 10000) * 10 + "s";
 				
 				var text = this.svg.createSVGText(x1_percentage + "%", 0, 0, rowHeight - 10, "font: 10px sans-serif;", anchor, text);
 				var line = this.svg.createSVGLine(x1_percentage + "%", y1, x1_percentage + "%", y2, "stroke: #ccc;");
@@ -465,6 +490,7 @@ Waterfall.prototype = {
 				svgChart.appendChild(line);
 				x1_percentage += interval;
 			}
+		}
 			
 		// draw main page events
 			for(var f in mainEvents)
@@ -472,7 +498,7 @@ Waterfall.prototype = {
 				var event = mainEvents[f];
 				
 				if(event.time > this.chartContainer.data.timeSpanUntil) continue;
-				if(event.time < this.chartContainer.data.timeSpanFrom) continue;
+				if((event.time) < this.chartContainer.data.timeSpanFrom) continue;
 				
 				var x = this.toPercentage(event.time, maxTime);
 				
@@ -489,24 +515,31 @@ Waterfall.prototype = {
 			}
 			
 		// draw resource entries
-		for(var n = 0; n < entriesToShow.length; n++) {
-			var entry = entriesToShow[n]; 
+		var n = 0;
+		for(var i = 0; i < entriesToShow.length; i++)
+		{
+			var entry = entriesToShow[i]; 
+			
+			var isDisplayed = true;
+			if(entry.start > this.chartContainer.data.timeSpanUntil) isDisplayed = false;
+			else if((entry.start + entry.duration) < this.chartContainer.data.timeSpanFrom) isDisplayed = false;
 			
 			var dy = 13;
 			
 			/* Label of the row */ {
-				var background = this.svg.createSVGRect(0, 0, 300, rowHeight);
+				//var background = this.svg.createSVGRect(0, 0, 300, rowHeight);
+				//rowLabel.appendChild(background);
 				
 				var rowLabel = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
-				rowLabel.appendChild(this.svg.createSVGText(5, 0, 0, dy, "font: 10px sans-serif;", "start", this.shortenURL(entry.url), entry.url));
-				rowLabel.appendChild(background);
+				var style = "font: 10px sans-serif;";
+				if(!isDisplayed) style += "fill:#ddd;";
+				rowLabel.appendChild(this.svg.createSVGText(5, 0, 0, dy, style, "start", this.shortenURL(entry.url), entry.url));
 				svgLabels.appendChild(rowLabel);
-				
 			}
-
+			
 			/* The chart */ {
 				var rowChart = this.svg.createSVGGroup("translate(0," + (n + 1) * (rowHeight + rowPadding) + ")");
-				rowChart.appendChild(this.drawBar(entry, 0, rowHeight, maxTime));
+				rowChart.appendChild(this.drawBar(entry, 0, rowHeight, minTime, maxTime));
 				svgChart.appendChild(rowChart);
 			}
 			
@@ -526,21 +559,24 @@ Waterfall.prototype = {
 					var anchor = "end";
 				}
 				
-				var positionX = this.toPercentage(latestTime, maxTime);
+				var positionX = this.toPercentage((latestTime - minTime), timeSpan);
 				
 				rowChart.appendChild(this.svg.createSVGText(positionX, 0, dx, dy, "font: 10px sans-serif;", anchor, Math.round(entry.duration) + "ms", ""));
 			}
 			
+			n++;
 		}
 		
-		var div = document.createElement("div");
-		div.className = "chart_svg";
-		div.appendChild(svgChart);
-		
-		this.chartContainer.appendChild(svgLabels);
-		this.chartContainer.appendChild(div);
-		
-		this.buildLegend();
+		/* Append the chart to page */ {
+			var div = document.createElement("div");
+			div.className = "chart_svg";
+			div.appendChild(svgChart);
+			
+			this.chartContainer.appendChild(svgLabels);
+			this.chartContainer.appendChild(div);
+			
+			this.buildLegend();
+		}
 	},
 	
 	// Calculates the percentage relation of part to max
@@ -557,48 +593,88 @@ Waterfall.prototype = {
 	 * @param {int} rowHeight 
 	 * @param {double} the latest point of time of all bars
 	 */
-	drawBar: function(entry, barOffset, rowHeight, maxTime) {
-		//var bar = this.svg.createSVGGroup("translate(" + barOffset + ", 0)");
-		var bar = this.svg.createSVGGroup();
+	drawBar: function(entry, barOffset, rowHeight, minTime, maxTime) {
+		var xmlns = this.svg.xmlns;
 		
-		//function createSVGRect(x, y, width, height, style)
-		bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.start, maxTime), 0, this.toPercentage(entry.duration, maxTime), rowHeight, "fill:" + this.barColorsMap.blocked.color));
+		var buildDurationTitle = function(duration) {
+			duration = Math.round(duration * 10) / 10.0;
+			
+			var title = document.createElementNS(xmlns, "title");
+			title.innerHTML = duration + "ms";
+			
+			return title;
+		}
+		
+		var bar = this.svg.createSVGGroup();
+		var span = maxTime - minTime;
+		
+		var start = entry.start - minTime;
+		var rect = this.svg.createSVGRect(this.toPercentage(start, span), 0, this.toPercentage(entry.duration, span), rowHeight, "fill:" + this.barColorsMap.blocked.color);
+		rect.appendChild(buildDurationTitle(entry.duration));
+		bar.appendChild(rect);
+			
 		this.barColorsMap.blocked.showInLegend = true;
 		
-		//bar.appendChild(this.svg.createSVGRect("10%", 10, "40%", rowHeight, "fill:" + this.barColorsMap.blocked.color));
-		
 		if(entry.redirectDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.redirectStart, maxTime), 0, this.toPercentage(entry.redirectDuration, maxTime), rowHeight, "fill:" + this.barColorsMap.redirect.color));
+			var redirectStart = entry.redirectStart - minTime;
+			var rect = this.svg.createSVGRect(this.toPercentage(redirectStart, span), 0, this.toPercentage(entry.redirectDuration, span), rowHeight, "fill:" + this.barColorsMap.redirect.color);
+			rect.appendChild(buildDurationTitle(entry.redirectDuration));
+			bar.appendChild(rect);
+			
 			this.barColorsMap.redirect.showInLegend = true;
 		}
 
 		if(entry.appCacheDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.appCacheStart, maxTime), 0, this.toPercentage(entry.appCacheDuration, maxTime) , rowHeight, "fill:" + this.barColorsMap.appCache.color));
+			var appCacheStart = entry.appCacheStart - minTime;
+			var rect = this.svg.createSVGRect(this.toPercentage(appCacheStart, span), 0, this.toPercentage(entry.appCacheDuration, span) , rowHeight, "fill:" + this.barColorsMap.appCache.color);
+			rect.appendChild(buildDurationTitle(entry.appCacheDuration));
+			bar.appendChild(rect);
+			
 			this.barColorsMap.appCache.showInLegend = true;
 		}
 
 		if(entry.dnsDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.dnsStart, maxTime) , 0, this.toPercentage(entry.dnsDuration, maxTime), rowHeight, "fill:" + this.barColorsMap.dns.color));
+			var dnsStart = entry.dnsStart - minTime;
+			var rect = this.svg.createSVGRect(this.toPercentage(dnsStart, span) , 0, this.toPercentage(entry.dnsDuration, span), rowHeight, "fill:" + this.barColorsMap.dns.color);
+			bar.appendChild(rect);
+			rect.appendChild(buildDurationTitle(entry.dnsDuration));
+			
 			this.barColorsMap.dns.showInLegend = true;
 		}
 
 		if(entry.tcpDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.tcpStart, maxTime) , 0, this.toPercentage(entry.tcpDuration, maxTime), rowHeight, "fill:" + this.barColorsMap.tcp.color));
+			var tcpStart = entry.tcpStart - minTime;
+			var rect = this.svg.createSVGRect(this.toPercentage(tcpStart, span) , 0, this.toPercentage(entry.tcpDuration, span), rowHeight, "fill:" + this.barColorsMap.tcp.color);
+			rect.appendChild(buildDurationTitle(entry.tcpDuration));
+			bar.appendChild(rect);
+			
 			this.barColorsMap.tcp.showInLegend = true;
 		}
 
 		if(entry.sslDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.sslStart, maxTime) , 0, this.toPercentage(entry.sslDuration, maxTime), rowHeight, "fill:" + this.barColorsMap.ssl.color));
+			var sslStart = entry.sslStart - minTime;
+			var rect = this.svg.createSVGRect(this.toPercentage(sslStart, span) , 0, this.toPercentage(entry.sslDuration, span), rowHeight, "fill:" + this.barColorsMap.ssl.color);
+			rect.appendChild(buildDurationTitle(entry.sslDuration));
+			bar.appendChild(rect);
+			
 			this.barColorsMap.ssl.showInLegend = true;
 		}
 
 		if(entry.requestDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.requestStart, maxTime) , 0, this.toPercentage(entry.requestDuration, maxTime), rowHeight, "fill:" + this.barColorsMap.request.color));
+			var requestStart = entry.requestStart - minTime;
+			var rect = this.svg.createSVGRect(this.toPercentage(requestStart, span) , 0, this.toPercentage(entry.requestDuration, span), rowHeight, "fill:" + this.barColorsMap.request.color);
+			rect.appendChild(buildDurationTitle(entry.requestDuration));
+			bar.appendChild(rect);
+			
 			this.barColorsMap.request.showInLegend = true;
 		}
 
 		if(entry.responseDuration > 0) {
-			bar.appendChild(this.svg.createSVGRect(this.toPercentage(entry.responseStart, maxTime) , 0, this.toPercentage(entry.responseDuration, maxTime), rowHeight, "fill:" + this.barColorsMap.response.color));
+			var responseStart = entry.responseStart - minTime;
+			var rect = this.svg.createSVGRect(this.toPercentage(responseStart, span) , 0, this.toPercentage(entry.responseDuration, span), rowHeight, "fill:" + this.barColorsMap.response.color);
+			rect.appendChild(buildDurationTitle(entry.responseDuration));
+			bar.appendChild(rect);
+			
 			this.barColorsMap.response.showInLegend = true;
 		}
 
@@ -609,6 +685,8 @@ Waterfall.prototype = {
 		//this.chartContainer = document.getElementById("ChartContainer");
 		this.chartContainer.innerHTML = "";
 		
+		var notAllowedInitiatorType = this.chartContainer.data.notAllowedInitiatorType;
+		var allowedInitiatorType = this.chartContainer.data.allowedInitiatorType;
 		var allowed = this.chartContainer.data.allowed;
 		var notAllowed = this.chartContainer.data.notAllowed;
 		var searchText = this.chartContainer.data.searchText;
@@ -619,25 +697,32 @@ Waterfall.prototype = {
 		var filteredEntries = [];
 		for(var f in entries)
 		{
-			var url = entries[f].url.toLowerCase().split("?")[0].toLowerCase();
+			var entry = entries[f];
+			var url = entry.url.toLowerCase().split("?")[0].toLowerCase();
 			var file = url.split("/").pop();
 			var ending = file.split(".").pop();
-			var startTime = entries[f].start;
+			//var startTime = entry.start;
 			
-			if(allowed != null && allowed.length > 0 && allowed.indexOf(ending) == -1) continue;
+			if(allowedInitiatorType != null && allowedInitiatorType.length > 0 && allowedInitiatorType.indexOf(entry.initiatorType) == -1)
+			{
+				if(allowed != null && allowed.length > 0 && allowed.indexOf(ending) == -1) continue;
+			}
+			
 			if(notAllowed != null && notAllowed.length > 0 && notAllowed.indexOf(ending) != -1) continue;
-			if(timeSpanUntil > 0 && startTime > timeSpanUntil) continue;
-			if(timeSpanFrom > 0 && startTime < timeSpanFrom) continue;
+			if(notAllowedInitiatorType != null && notAllowedInitiatorType.length > 0 && notAllowedInitiatorType.indexOf(entry.initiatorType) != -1) continue;
+			
+			//if(timeSpanUntil > 0 && startTime > timeSpanUntil) continue;
+			//if(timeSpanFrom > 0 && startTime < timeSpanFrom) continue;
 			if(searchText.length > 0 && url.indexOf(searchText) == -1) continue;
 			/*
 			else
 			{
-				entries[f].url = url.replace(searchText, "<b>" + searchText + "</b>");
+				entry.url = url.replace(searchText, "<b>" + searchText + "</b>");
 				console.log(url);
 			}
 			//*/
 			
-			filteredEntries.push(entries[f]);
+			filteredEntries.push(entry);
 		}
 		
 		return filteredEntries;
@@ -682,9 +767,10 @@ Waterfall.prototype = {
 	 */
 	createEntryFromNavigationTiming: function() {
 		var timing = window.performance.timing;
-		console.log(timing);
+		
 		return {
 			url:				document.URL,
+			initiatorType:		"",
 			start:				0,
 			duration:			timing.responseEnd - timing.navigationStart,
 			redirectStart:		timing.redirectStart === 0 ? 0 : timing.redirectStart - timing.navigationStart,
@@ -743,8 +829,10 @@ Waterfall.prototype = {
 		// AppCache: start = fetchStart, end = domainLookupStart, connectStart or requestStart
 		// TCP: start = connectStart, end = secureConnectionStart or connectEnd
 		// SSL: secureConnectionStart can be undefined
+		
 		return {
 			url:				resource.name,
+			initiatorType:		resource.initiatorType,
 			start:				resource.startTime,
 			duration:			resource.duration,
 			redirectStart:		resource.redirectStart,
@@ -762,7 +850,7 @@ Waterfall.prototype = {
 			responseStart:		resource.responseStart,
 			// ??? - Chromium returns zero for responseEnd for 3rd party URLs, bug?
 			responseDuration:	resource.responseStart == 0 ? 0 : resource.responseEnd - resource.responseStart
-		}
+		};
 	},
 	
 	/**
