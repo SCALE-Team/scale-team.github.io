@@ -437,7 +437,6 @@ Waterfall.prototype = {
 			
 			// Get the entries to show
 			var entriesToShow = this.filterEntries(entries);
-			//var entriesToShow = entries;
 			
 			// Find the latest time
 			var minTime = this.chartContainer.data.timeSpanFrom || 0;
@@ -799,7 +798,7 @@ Waterfall.prototype = {
 	
 	getMainPageEvents: function() {
 		var timing = window.performance.timing;
-		console.log(timing);
+		
 		return [
 			{
 				name:			"DOM Content loaded",
