@@ -3,6 +3,7 @@ var ScalePerformanceBarClass = function() {
 	this.menu.superClass = this;
 	this.tools.superClass = this;
 	this.helpers.superClass = this;
+	this.popup.superClass = this;
 	
 	// add all CSS styles
 	this.addStyles();
@@ -32,6 +33,7 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/performanceBookmarklet.js",
 			devHref:					"https://scale-team.github.io/scale-perf-dev/tools/performanceBookmarklet.js",
 			localHref:				"/tools/performanceBookmarklet.js",
+			helpText:				"A bookmarklet with several metrics about your page. View the documentation at <a href='https://github.com/micmro/performance-bookmarklet'>Github</a>.",
 			requiresPerformanceApi:	true,
 			onload: function(superClass) {
 				superClass.tools.activeTool = new PerfBookmarklet();
@@ -43,6 +45,7 @@ ScalePerformanceBarClass.prototype = {
 			devHref:				"https://scale-team.github.io/scale-perf-dev/tools/waterfall.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/waterfall.js",
+			helpText:				"Gives you an overview about all resources loaded by the page and their load times. Use the time filters to zoom into the waterfall.<br />The waterfall automatically calculates the 'page load time' and sets it as the maximum time ('until xxx'). It's the time the page needed build up completely, including external resources. Continuous requests to the server should be hidden by doing this.",
 			onload: function(superClass) {
 				superClass.tools.activeTool = new Waterfall({ getPageLoadTime: superClass.helpers.getPageLoadTimeFromResources });
 			}
@@ -52,6 +55,7 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/perfmap.js",
 			devHref:				"https://scale-team.github.io/scale-perf-dev/tools/perfmap.js",
 			localHref:				"/tools/perfmap.js",
+			helpText:				"This tool shows you The time the pictures were loaded and how long they took to load.",
 			requiresPerformanceApi:	true,
 			onload: function(superClass) {
 				superClass.tools.activeTool = new PerfMap();
@@ -62,6 +66,7 @@ ScalePerformanceBarClass.prototype = {
 			href:		"https://scale-team.github.io/scale-perf/tools/dommonster.js",
 			devHref:	"https://scale-team.github.io/scale-perf-dev/tools/dommonster.js",
 			localHref:	"/tools/dommonster.js",
+			helpText:	"Analyze the DOM tree for tipps.<br />elements: Amount of HTML elements<br />text nodes: Amount of text nodes<br />nodes: Total amount of elements (HTML + text nodes)",
 			onload: function(superClass) {
 				superClass.tools.activeTool = new DomMonster();
 			}
@@ -71,6 +76,7 @@ ScalePerformanceBarClass.prototype = {
 			href:		"https://scale-team.github.io/scale-perf/tools/stats.js",
 			devHref:	"https://scale-team.github.io/scale-perf-dev/tools/stats.js",
 			localHref:	"/tools/stats.js",
+			helpText:	"Shows you how fast your webpage is rendered. It has the same meaning like in games. If your webpage gets below 30 FPS it is definitely too complex to be rendered fast enough.<br />Play with it! E.g. scroll down your webpage, reload things and watch the impact at your rendering performance. The efefct will be more visible when you simulate a slow network connection. You can set this in the Chrome developer tools (<a href='http://www.elijahmanor.com/enhanced-chrome-emulation-tools/'>have a look here</a>).",
 			onload: function(superClass) {
 				superClass.tools.activeTool = new Stats();
 			}
@@ -128,6 +134,8 @@ ScalePerformanceBarClass.prototype = {
 			style += "#PerfBar .perfSymbolsSeparator { display: block; }";
 			
 			style += "#ScalePageContent, #PerfBar, #ToolsActiveBar, .scaleToolContainer { transition: none !important; } ";
+			
+			style += "#ScalePopUp { top: 5px; right: 5px; bottom: 5px; left: 5px; }";
 		style += "}";
 		style += "#PerfToolTitle { font-weight: bold; }";
 		style += "#ToolsActiveBar .perfToolBackButton { font-weight: bold; }";
@@ -136,7 +144,15 @@ ScalePerformanceBarClass.prototype = {
 		
 		style += "#PerfBar, #ToolsActiveBar { transition: top ease-out 0.5s, opacity ease-out 0.5s; -webkit-transition: top ease-out 0.5s, opacity ease-out 0.5s; }";
 		style += "#ScalePageContent { transition: top ease-out 0.5s, opacity ease-out 0.5s; -webkit-transition: top ease-out 0.5s, opacity ease-out 0.5s; }";
-
+		
+		style += "#ScalePopUp { z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 50%; margin-left: -200px; 0px auto; width: 400px; height: auto; min-height: auto; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
+		style += "#ScalePopUp.is_short { height: 300px; }";
+		style += "#ScalePopUp .content { position: absolute; top: 0px; left: 0px; right: 0px; bottom: 50px; overflow: auto; padding: 15px; }";
+		style += "#ScalePopUp .button-row { position: absolute; bottom: 0px; left: 0px; right: 0px; height: 50px; }";
+		style += "#ScalePopUp .button-row a { position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px; color: #555; font-size: 16px; background: rgba(0,0,0,0.1); padding: 14px; text-align: center; }";
+		style += "#ScalePopUp .button-row a:hover { cursor: pointer; background-color: rgba(0,0,0,0.2); }";
+		style += "#ScalePopUpBackground { z-index: 1000001; position: fixed; top: 0px; right: 0px; bottom: 0px; left: 0px; background: rgba(0,0,0,0.5); }";
+		
 		this.styleElem.innerHTML = style;
 		head.appendChild(this.styleElem);
 	},
@@ -340,6 +356,7 @@ ScalePerformanceBarClass.prototype = {
 			
 			// Set the tools-bar title
 			superClass.toolBarActiveTitle.innerHTML = script.name || script.symbol;
+			superClass.currentHelperContent = script.helpText;
 			
 			var loadScript = function() {
 				// Load specified script
@@ -417,41 +434,54 @@ ScalePerformanceBarClass.prototype = {
 				superClass.toolBarActiveTitle.innerHTML = "Nice tool";
 				toolBarActiveBackButton.appendChild(superClass.toolBarActiveTitle);
 				
-				// Add close button
+				// Add symbols
 				var symbolsBlock = document.createElement("div");
 				symbolsBlock.className = "perf-symbols";
 				tools.bar.appendChild(symbolsBlock);
 				
-				var close = document.createElement("a");
-				close.href = "javascript:;";
-				close.innerHTML = "X";
-				close.onclick = function(isBackButton) {
-					tools.hide();
-					
-					// if back button was triggered originally
-					if(isBackButton === true)
-					{
-						// Show menu bar
-						superClass.menu.show();
-					}
-					else
-					{
-						// Set page content back to normal position
-						superClass.pageContent.style.top = "0px";
-					}
-					
-					var elem = document.getElementById(tools.activeTool.containerId);
-					elem.style.top = -elem.offsetHeight + "px";
-					
-					window.setTimeout(function() {
-						// Remove the tool script
-						var scriptElem = document.getElementById("PerfScript");
-						scriptElem.parentNode.removeChild(scriptElem);
+					// Add help button
+					var help = document.createElement("a");
+					help.href = "javascript:;";
+					help.innerHTML = "?";
+					help.superClass = superClass;
+					help.onclick = function(e) {
+						var content = e.target.superClass.currentHelperContent;
 						
-						if(tools.activeTool.onclose != null) tools.activeTool.onclose();
-					}, 500);
-				};
-				symbolsBlock.appendChild(close);
+						scalePerformanceBar.popup.show(content);
+					};
+					symbolsBlock.appendChild(help);
+					
+					// Add close button
+					var close = document.createElement("a");
+					close.href = "javascript:;";
+					close.innerHTML = "X";
+					close.onclick = function(isBackButton) {
+						tools.hide();
+						
+						// if back button was triggered originally
+						if(isBackButton === true)
+						{
+							// Show menu bar
+							superClass.menu.show();
+						}
+						else
+						{
+							// Set page content back to normal position
+							superClass.pageContent.style.top = "0px";
+						}
+						
+						var elem = document.getElementById(tools.activeTool.containerId);
+						elem.style.top = -elem.offsetHeight + "px";
+						
+						window.setTimeout(function() {
+							// Remove the tool script
+							var scriptElem = document.getElementById("PerfScript");
+							scriptElem.parentNode.removeChild(scriptElem);
+							
+							if(tools.activeTool.onclose != null) tools.activeTool.onclose();
+						}, 500);
+					};
+					symbolsBlock.appendChild(close);
 			}
 		},
 		
@@ -491,21 +521,6 @@ ScalePerformanceBarClass.prototype = {
 			// Flag if this script is executes locally or not
 			return (typeof(isDevelopmentMode) == "undefined" ? false : isDevelopmentMode);
 		},
-		
-		/*
-		avoidPageOverlapWithBar: function() {
-			var superClass = this.superClass;
-			
-			var body = document.getElementsByTagName("body")[0];
-			
-			var h1 = (superClass.menu.bar != null ? superClass.menu.bar.offsetHeight : 0);
-			var h2 = (superClass.tools.bar != null ? superClass.tools.bar.offsetHeight : 0);
-			superClass.menu.barHeight = Math.max(h1, h2);
-			
-			// move the page to the right place
-			superClass.pageContent.style.top = (superClass.menu.barHeight) + "px";
-		},
-		//*/
 		
 		animate: function(elem, height, endPosition) {
 			endPosition = endPosition||0;
@@ -573,11 +588,12 @@ ScalePerformanceBarClass.prototype = {
 			{
 				var resource = resources[f];
 				
-				if((resource.start - pageLoadTime) >= 2000) break;
+				var fin = resource.start + resource.duration;
 				
-				pageLoadTime = resource.start + resource.duration;
+				if((fin - pageLoadTime) >= 2000) break;
+				
+				pageLoadTime = Math.max(pageLoadTime, fin);
 			}
-			
 			return Math.round(pageLoadTime);
 		},
 		
@@ -592,6 +608,71 @@ ScalePerformanceBarClass.prototype = {
 		
 		addClass: function(elemClassName, classToAdd) {
 			return elemClassName += " " + classToAdd;
+		}
+	},
+	
+	popup: {
+		id:				"ScalePopUp",
+		backgroundId:	"ScalePopUpBackground",
+		elem:			null,
+		contentElem:	null,
+		backgroundElem:	null,
+		
+		show: function(content) {
+			var popup = this.superClass.popup;
+			
+			if(popup.elem == null)
+			{
+				popup.elem = document.createElement("div");
+				popup.elem.id = popup.id;
+				document.body.appendChild(popup.elem);
+				
+				popup.contentElem = document.createElement("div");
+				popup.contentElem.className = "content";
+				popup.elem.appendChild(popup.contentElem);
+				
+				var buttonRow = document.createElement("div");
+				buttonRow.className = "button-row";
+				popup.elem.appendChild(buttonRow);
+				
+				var closeButton = document.createElement("a");
+				closeButton.innerHTML = "close";
+				closeButton.onclick = function(){ popup.hide() };
+				buttonRow.appendChild(closeButton);
+				
+				// Background
+				popup.backgroundElem = document.createElement("div");
+				popup.backgroundElem.id = popup.backgroundId;
+				popup.backgroundElem.onclick = function(){ popup.hide() };
+				document.body.appendChild(popup.backgroundElem);
+			}
+			
+			popup.elem.style.display = "block";
+			popup.backgroundElem.style.display = "block";
+			
+			if(typeof(content) == "string")
+			{
+				popup.elem.className = "is_short";
+				
+				popup.contentElem.innerHTML = content;
+			}
+			else if(typeof(content) == "object")
+			{
+				popup.contentElem.className = "";
+				
+				for(var f in content)
+				{
+					popup.contentElem.appendChild(content[f]);
+				}
+			}
+		},
+		
+		hide: function() {
+			var popup = this.superClass.popup;
+			
+			popup.elem.style.display = "none";
+			popup.backgroundElem.style.display = "none";
+			popup.contentElem.innerHTML = "";
 		}
 	}
 };
