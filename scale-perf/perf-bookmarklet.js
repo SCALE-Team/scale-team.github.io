@@ -33,6 +33,7 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/performanceBookmarklet.js",
 			devHref:					"https://scale-team.github.io/scale-perf-dev/tools/performanceBookmarklet.js",
 			localHref:				"/tools/performanceBookmarklet.js",
+			helpText:				"A bookmarklet with several metrics about your page. View the documentation at <a href='https://github.com/micmro/performance-bookmarklet'>Github</a>.",
 			requiresPerformanceApi:	true,
 			onload: function(superClass) {
 				superClass.tools.activeTool = new PerfBookmarklet();
@@ -44,6 +45,7 @@ ScalePerformanceBarClass.prototype = {
 			devHref:				"https://scale-team.github.io/scale-perf-dev/tools/waterfall.js",
 			requiresPerformanceApi:	true,
 			localHref:				"/tools/waterfall.js",
+			helpText:				"Gives you an overview about all resources loaded by the page and their load times. Use the time filters to zoom into the waterfall.<br />The waterfall automatically calculates the 'page load time' and sets it as the maximum time ('until xxx'). It's the time the page needed build up completely, including external resources. Continuous requests to the server should be hidden by doing this.",
 			onload: function(superClass) {
 				superClass.tools.activeTool = new Waterfall({ getPageLoadTime: superClass.helpers.getPageLoadTimeFromResources });
 			}
@@ -53,6 +55,7 @@ ScalePerformanceBarClass.prototype = {
 			href:					"https://scale-team.github.io/scale-perf/tools/perfmap.js",
 			devHref:				"https://scale-team.github.io/scale-perf-dev/tools/perfmap.js",
 			localHref:				"/tools/perfmap.js",
+			helpText:				"This tool shows you The time the pictures were loaded and how long they took to load.",
 			requiresPerformanceApi:	true,
 			onload: function(superClass) {
 				superClass.tools.activeTool = new PerfMap();
@@ -63,6 +66,7 @@ ScalePerformanceBarClass.prototype = {
 			href:		"https://scale-team.github.io/scale-perf/tools/dommonster.js",
 			devHref:	"https://scale-team.github.io/scale-perf-dev/tools/dommonster.js",
 			localHref:	"/tools/dommonster.js",
+			helpText:	"Analyze the DOM tree for tipps.<br />elements: Amount of HTML elements<br />text nodes: Amount of text nodes<br />nodes: Total amount of elements (HTML + text nodes)",
 			onload: function(superClass) {
 				superClass.tools.activeTool = new DomMonster();
 			}
@@ -141,7 +145,7 @@ ScalePerformanceBarClass.prototype = {
 		style += "#PerfBar, #ToolsActiveBar { transition: top ease-out 0.5s, opacity ease-out 0.5s; -webkit-transition: top ease-out 0.5s, opacity ease-out 0.5s; }";
 		style += "#ScalePageContent { transition: top ease-out 0.5s, opacity ease-out 0.5s; -webkit-transition: top ease-out 0.5s, opacity ease-out 0.5s; }";
 		
-		style += "#ScalePopUp { z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 50%; margin-left: -200px; 0px auto; width: 400px; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
+		style += "#ScalePopUp { z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 50%; margin-left: -200px; 0px auto; width: 400px; height: auto; min-height: auto; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
 		style += "#ScalePopUp.is_short { height: 300px; }";
 		style += "#ScalePopUp .content { position: absolute; top: 0px; left: 0px; right: 0px; bottom: 50px; overflow: auto; padding: 15px; }";
 		style += "#ScalePopUp .button-row { position: absolute; bottom: 0px; left: 0px; right: 0px; height: 50px; }";
