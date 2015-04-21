@@ -32,51 +32,36 @@ ScalePerformanceBarClass.prototype = {
 	toolInfos: [
 		{
 			name:					"Performance Bookmarklet",
-			href:					"https://scale-team.github.io/scale-perf/tools/perfBookmarkletByMicmro.js",
-			devHref:				"https://scale-team.github.io/scale-perf-dev/tools/perfBookmarkletByMicmro.js",
-			localHref:				"/tools/perfBookmarkletByMicmro.js",
+			file:					"perfBookmarkletByMicmro.js",
 			requiresPerformanceApi:	true,
-			onload: function(superClass) {
-				superClass.tools.activeTool = new PerfBookmarkletByMicmro(superClass);
-			}
+			className:				"PerfBookmarkletByMicmro"
 		},
 		{
-			name:					"Page load waterfall",
-			href:					"https://scale-team.github.io/scale-perf/tools/waterfall.js",
-			devHref:				"https://scale-team.github.io/scale-perf-dev/tools/waterfall.js",
-			requiresPerformanceApi:	true,
-			localHref:				"/tools/waterfall.js",
-			onload: function(superClass) {
-				superClass.tools.activeTool = new Waterfall({ getPageLoadTime: superClass.helpers.getPageLoadTimeFromResources });
+			name:						"Page load waterfall",
+			file:						"waterfall.js",
+			requiresPerformanceApi:		true,
+			className:					"Waterfall",
+			getParamsForConstructor:	function(superClass) {
+				return {
+					getPageLoadTime:	superClass.helpers.getPageLoadTimeFromResources
+				};
 			}
 		},
 		{
 			name:					"Picture load times",
-			href:					"https://scale-team.github.io/scale-perf/tools/perfmap.js",
-			devHref:				"https://scale-team.github.io/scale-perf-dev/tools/perfmap.js",
-			localHref:				"/tools/perfmap.js",
+			file:					"perfmap.js",
 			requiresPerformanceApi:	true,
-			onload: function(superClass) {
-				superClass.tools.activeTool = new PerfMap();
-			}
+			className:				"PerfMap"
 		},
 		{
 			name:		"Analyze DOM tree",
-			href:		"https://scale-team.github.io/scale-perf/tools/dommonster.js",
-			devHref:	"https://scale-team.github.io/scale-perf-dev/tools/dommonster.js",
-			localHref:	"/tools/dommonster.js",
-			onload: function(superClass) {
-				superClass.tools.activeTool = new DomMonster();
-			}
+			file:		"dommonster.js",
+			className:	"DomMonster"
 		},
 		{
 			name:		"FPS display",
-			href:		"https://scale-team.github.io/scale-perf/tools/stats.js",
-			devHref:	"https://scale-team.github.io/scale-perf-dev/tools/stats.js",
-			localHref:	"/tools/stats.js",
-			onload: function(superClass) {
-				superClass.tools.activeTool = new Stats();
-			}
+			file:		"stats.js",
+			className:	"Stats"
 		},
 		{
 			name:			"Help",
@@ -402,7 +387,7 @@ ScalePerformanceBarClass.prototype = {
 				e.target._onToolStartTrigger(superClass);
 			}
 			
-			if(script.href == null && script.localHref == null) return;
+			if(script.file == null) return;
 			
 			menu.hide();
 			tools.show();
@@ -417,29 +402,40 @@ ScalePerformanceBarClass.prototype = {
 				jselem.type = "text/javascript";
 				
 				// Decide whether to load local, dev or public script
-				if(superClass.helpers.isLocal() && script.localHref != null)
+				if(superClass.helpers.isLocal())
 				{
-					jselem.src = script.localHref;
+					jselem.src = "/tools/" + script.file;
 				}
-				else if(superClass.helpers.isDev() && script.devHref != null)
+				else if(superClass.helpers.isDev())
 				{
-					jselem.src = script.devHref;
+					jselem.src = "https://scale-team.github.io/scale-perf-dev/tools/" + script.file;
 				}
 				else
 				{
-					jselem.src = script.href;
+					jselem.src = "https://scale-team.github.io/scale-perf/tools/" + script.file;
 				}
 				
-				if(script.onload != null)
-				{
-					jselem.onload = function() {
-						script.onload(superClass);
+				jselem.onload = function() {
+					if(script.className != null)
+					{
+						var params;
 						
-						if(tools.activeTool.onload != null) tools.activeTool.onload();
+						if(typeof(script.getParamsForConstructor) == "function")
+						{
+							params = script.getParamsForConstructor(superClass);
+						}
+						else if(script.getParamsForConstructor != null)
+						{
+							params = script.getParamsForConstructor;
+						}	
 						
-						tools.executeOnActiveToolLoaded();
+						tools.activeTool = new window[script.className](params);
 					}
-				}
+					
+					if(tools.activeTool.onload != null) tools.activeTool.onload();
+					
+					tools.executeOnActiveToolLoaded();
+				};
 				
 				document.getElementsByTagName("body")[0].appendChild(jselem);
 			};
