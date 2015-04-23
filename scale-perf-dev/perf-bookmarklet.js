@@ -651,14 +651,14 @@ ScalePerformanceBarClass.prototype = {
 		style += ".scalePopUp .scale_popup_button_row a:hover { cursor: pointer; background-color: #BDC3C7; }";
 		style += ".scalePopUpBackground { z-index: 1000001; position: fixed; top: 0px; right: 0px; bottom: 0px; left: 0px; background: rgba(0,0,0,0.5); }";
 		
-		style += '.scalePopUp h1, .scalePopUp h2, .scalePopUp h3, .scalePopUp h4, .scalePopUp h5 { font-weight: 500; line-height: 1.1; text-decoration: none; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #16A085; margin: 20px 0px 20px; }';
-		style += '.scalePopUp h1 { font-size: 36px; margin: 0px 0px 20px; }';
-		style += '.scalePopUp h2 { font-size: 30px; }';
-		style += '.scalePopUp h3 { font-size: 24px; }';
-		style += '.scalePopUp h4 { font-size: 18px; }';
-		style += '.scalePopUp h5 { font-size: 14px; }';
-		style += '.scalePopUp a { color: #345F41; text-decoration: none !important; }';
-		style += '.scalePopUp a:hover, a:active, a:focus { color: #2D5036; }';
+		style += '.scalePopUp h1, .scalePopUp h2, .scalePopUp h3, .scalePopUp h4, .scalePopUp h5 { font-weight: 500 !important; line-height: 20px !important; text-decoration: none !important; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #16A085 !important; margin: 20px 0px 20px !important; padding: 0px !important; }';
+		style += '.scalePopUp h1 { font-size: 36px !important; margin: 0px 0px 20px !important; }';
+		style += '.scalePopUp h2 { font-size: 30px !important; }';
+		style += '.scalePopUp h3 { font-size: 24px !important; }';
+		style += '.scalePopUp h4 { font-size: 18px !important; }';
+		style += '.scalePopUp h5 { font-size: 14px !important; }';
+		style += '.scalePopUp a { color: #345F41 !important; text-decoration: none !important; }';
+		style += '.scalePopUp a:hover, a:active, a:focus { color: #2D5036 !important; }';
 		
 		style += "@media (max-width: 768px) {";
 			style += ".scalePopUp { width: 400px; left: 50%; margin-left: -200px; }";
