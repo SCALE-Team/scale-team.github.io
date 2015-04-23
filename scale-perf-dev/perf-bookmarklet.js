@@ -651,7 +651,7 @@ ScalePerformanceBarClass.prototype = {
 		style += ".scalePopUp .scale_popup_button_row a:hover { cursor: pointer; background-color: #BDC3C7; }";
 		style += ".scalePopUpBackground { z-index: 1000001; position: fixed; top: 0px; right: 0px; bottom: 0px; left: 0px; background: rgba(0,0,0,0.5); }";
 		
-		style += '.scalePopUp h1, .scalePopUp h2, .scalePopUp h3, .scalePopUp h4, .scalePopUp h5 { font-weight: 500 !important; line-height: 20px !important; text-decoration: none !important; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #16A085 !important; margin: 20px 0px 20px !important; padding: 0px !important; }';
+		style += '.scalePopUp h1, .scalePopUp h2, .scalePopUp h3, .scalePopUp h4, .scalePopUp h5 { font-weight: 500 !important; line-height: 1.1 !important; text-decoration: none !important; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #16A085 !important; margin: 20px 0px 20px !important; padding: 0px !important; }';
 		style += '.scalePopUp h1 { font-size: 36px !important; margin: 0px 0px 20px !important; }';
 		style += '.scalePopUp h2 { font-size: 30px !important; }';
 		style += '.scalePopUp h3 { font-size: 24px !important; }';
