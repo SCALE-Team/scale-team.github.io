@@ -641,7 +641,7 @@ ScalePerformanceBarClass.prototype = {
 		var styleElem = document.createElement("style");
 		styleElem.id = "ScalePopUpStyle";
 		
-		var style = ".scalePopUp { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 25%; width: 50%; height: auto; min-height: auto; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
+		var style = ".scalePopUp { line-height: 20px !important; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 25%; width: 50%; height: auto; min-height: auto; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
 		style += ".scalePopUp ul { list-style: inherit; margin: auto; padding: inherit; }";
 		style += ".scalePopUp .scale_popup_img_responsive { width: 100%; }";
 		style += ".scalePopUp.is_short { height: 500px; }";
