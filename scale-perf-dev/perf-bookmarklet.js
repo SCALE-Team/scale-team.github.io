@@ -642,7 +642,7 @@ ScalePerformanceBarClass.prototype = {
 		styleElem.id = "ScalePopUpStyle";
 		
 		var style = ".scalePopUp { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 25%; width: 50%; height: auto; min-height: auto; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
-		style += ".scalePopUp ul { list-style: auto; margin: auto; padding: inherit; }";
+		style += ".scalePopUp ul { list-style: inherit; margin: auto; padding: inherit; }";
 		style += ".scalePopUp .img-responsive { width: 100%; }";
 		style += ".scalePopUp.is_short { height: 500px; }";
 		style += ".scalePopUp .content { position: absolute; top: 0px; left: 0px; right: 0px; bottom: 50px; overflow: auto; padding: 15px; }";
