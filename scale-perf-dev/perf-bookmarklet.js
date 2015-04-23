@@ -641,15 +641,8 @@ ScalePerformanceBarClass.prototype = {
 		var styleElem = document.createElement("style");
 		styleElem.id = "ScalePopUpStyle";
 		
-		var style = ".scalePopUp { z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 25%; width: 50%; height: auto; min-height: auto; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
-		style += "h1, h2, h3, h4, h5 { font-weight: 500; line-height: 1.1; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #16A085; margin: 20px 0px 20px; }";
-		style += "h1 { font-size: 36px; margin: 0px 0px 20px; }";
-		style += "h2 { font-size: 30px; }";
-		style += "h3 { font-size: 24px; }";
-		style += "h4 { font-size: 18px; }";
-		style += "h5 { font-size: 14px; }";
-		style += "a { color: #345F41; }";
-		style += "a:hover, a:active, a:focus { text-decoration: none; color: #2D5036; }";
+		var style = ".scalePopUp { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; z-index: 1000002; position: fixed; top: 10px; bottom: 10px; left: 25%; width: 50%; height: auto; min-height: auto; background: #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.7); }";
+		style += ".scalePopUp ul { list-style: auto; margin: auto; padding: inherit; }";
 		style += ".scalePopUp .img-responsive { width: 100%; }";
 		style += ".scalePopUp.is_short { height: 500px; }";
 		style += ".scalePopUp .content { position: absolute; top: 0px; left: 0px; right: 0px; bottom: 50px; overflow: auto; padding: 15px; }";
@@ -657,6 +650,15 @@ ScalePerformanceBarClass.prototype = {
 		style += ".scalePopUp .button-row a { position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px; color: #555; font-size: 16px; background: #ECF0F1; padding: 14px; text-align: center; }";
 		style += ".scalePopUp .button-row a:hover { cursor: pointer; background-color: #BDC3C7; }";
 		style += ".scalePopUpBackground { z-index: 1000001; position: fixed; top: 0px; right: 0px; bottom: 0px; left: 0px; background: rgba(0,0,0,0.5); }";
+		
+		style += '.scalePopUp h1, .scalePopUp h2, .scalePopUp h3, .scalePopUp h4, .scalePopUp h5 { font-weight: 500; line-height: 1.1; text-decoration: none; color: #16A085; margin: 20px 0px 20px; }';
+		style += '.scalePopUp h1 { font-size: 36px; margin: 0px 0px 20px; }';
+		style += '.scalePopUp h2 { font-size: 30px; }';
+		style += '.scalePopUp h3 { font-size: 24px; }';
+		style += '.scalePopUp h4 { font-size: 18px; }';
+		style += '.scalePopUp h5 { font-size: 14px; }';
+		style += '.scalePopUp a { color: #345F41; text-decoration: none !important; }';
+		style += '.scalePopUp a:hover, a:active, a:focus { color: #2D5036; }';
 		
 		style += "@media (max-width: 768px) {";
 			style += ".scalePopUp { width: 400px; left: 50%; margin-left: -200px; }";
