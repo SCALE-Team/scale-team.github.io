@@ -4,7 +4,7 @@ body {
 }
 
 /* Same for with bookmarklet */
-	h1, h2, h3, h4, h5 { font-weight: 500; line-height: 1.1; text-decoration: none; color: #16A085; margin: 20px 0px 20px; }
+	h1, h2, h3, h4, h5 { font-weight: 500; line-height: 1.1; text-decoration: none; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #16A085; margin: 20px 0px 20px; }
 	h1 { font-size: 36px; margin: 0px 0px 20px; }
 	h2 { font-size: 30px; }
 	h3 { font-size: 24px; }
