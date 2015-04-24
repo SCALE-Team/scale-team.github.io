@@ -319,23 +319,14 @@ ScalePerformanceBarClass.prototype = {
 			}
 			
 			jselem.onload = function() {
-				// Call the constructor
+				// Create an object of the tool
 				if(script.className != null)
 				{
-					var params = {
-						performanceApi:	superClass.performanceApi,
-						container:		tools.toolContainer
-					};
-					
 					var toolClass = window[script.className];
-					tools.activeTool = new toolClass(params);
+					tools.activeTool = new toolClass(superClass.performanceApi, tools.toolContainer, superClass.popup);
 				}
 				
-				if(tools.activeTool.onload != null)
-				{
-					tools.activeTool.onload();
-				}
-				
+				// Set if container is fixed
 				tools.toolContainer.style.position = script.isFixed ? "fixed" : "absolute";
 				
 				var toolHeight = tools.toolContainer.offsetHeight;
@@ -453,7 +444,7 @@ ScalePerformanceBarClass.prototype = {
 							// Remove the tool container
 							tools.toolContainer.parentNode.removeChild(tools.toolContainer);
 							
-							if(tools.activeTool.onclose != null) tools.activeTool.onclose();
+							if(tools.activeTool.destructor != null) tools.activeTool.destructor();
 						}, 500);
 					};
 					symbolsBlock.appendChild(close);
@@ -645,7 +636,7 @@ ScalePerformanceBarClass.prototype = {
 		style += ".scalePopUp ul { list-style: inherit; margin: auto; padding: inherit; }";
 		style += ".scalePopUp .scale_popup_img_responsive { width: 100%; }";
 		style += ".scalePopUp.is_short { height: 500px; }";
-		style += ".scalePopUp .scale_popup_content { position: absolute; top: 0px; left: 0px; right: 0px; bottom: 50px; overflow: auto; padding: 15px; }";
+		style += ".scalePopUp .scale_popup_content { word-wrap: break-word; position: absolute; top: 0px; left: 0px; right: 0px; bottom: 50px; overflow: auto; padding: 15px; }";
 		style += ".scalePopUp .scale_popup_button_row { position: absolute; bottom: 0px; left: 0px; right: 0px; height: 50px; }";
 		style += ".scalePopUp .scale_popup_button_row a { position: absolute; top: 0px; right: 0px; bottom: 0px; left: 0px; color: #555; font-size: 16px; background: #ECF0F1; padding: 14px; text-align: center; }";
 		style += ".scalePopUp .scale_popup_button_row a:hover { cursor: pointer; background-color: #BDC3C7; }";
