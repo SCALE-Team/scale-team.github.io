@@ -1,16 +1,16 @@
-var PerfMap = function(conf) {
-	perfmap(conf);
+var PerfMap = function(performanceApi, toolContainer) {
+	perfmap(performanceApi, toolContainer);
 	
 	var perfmapElem = document.getElementById("perfmap");
 	
 	var styleElem = document.createElement("style");
 	styleElem.id = "PerfMapStyle";
 	styleElem.innerHTML = "#perfmap { position: fixed; z-index: 10000 !important; top: auto !important; bottom: 0px; overflow: hidden; }";
-	document.body.appendChild(styleElem);
+	toolContainer.appendChild(styleElem);
 	
 	return {
 		/* SCALE performance tool IO functions */
-			onclose: function() {
+			destructor: function() {
 				var elems = document.getElementsByClassName("perfmap");
 				while(elems.length > 0)
 				{
@@ -22,7 +22,7 @@ var PerfMap = function(conf) {
 	};
 };
 
-function perfmap(scaleBookmarklet) {
+function perfmap(performanceApi, toolContainer) {
 	var gZeroLeft = 0;
 	var gZeroTop = 0;
 	var gWinWidth = window.innerWidth || document.documentElement.clientWidth;
