@@ -537,7 +537,7 @@ Waterfall.prototype = {
 				background.info = [
 					{
 						name:	"URL",
-						value:	entry.url
+						value:	'<a href="' + entry.url + '" target="_blank">' + entry.url + '</a>'
 					},
 					{
 						name:	"Initiator type",
